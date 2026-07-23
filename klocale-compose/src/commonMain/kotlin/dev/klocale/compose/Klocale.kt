@@ -36,3 +36,16 @@ public fun rememberNumberFormatter(
 ): NumberFormatter = remember(style, locale, policy) {
     NumberFormatter.orThrow(style, locale, policy)
 }
+
+/**
+ * Like [rememberNumberFormatter] but returns `null` instead of throwing when the style is invalid
+ * or unsupported for the locale — safe for dynamic styles that may not exist on the current platform.
+ */
+@Composable
+public fun rememberNumberFormatterOrNull(
+    style: NumberStyle,
+    locale: NumberLocale = LocalNumberLocale.current,
+    policy: NormalizationPolicy = NormalizationPolicy.Default,
+): NumberFormatter? = remember(style, locale, policy) {
+    NumberFormatter(style, locale, policy).getOrNull()
+}
