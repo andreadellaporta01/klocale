@@ -74,5 +74,13 @@ android {
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // Common GoldenTest/FormatStringTest need real ICU; on Android only the
+        // Robolectric-backed AndroidGoldenTest can run them, so exclude the rest.
+        unitTests.all { test ->
+            test.filter {
+                excludeTestsMatching("dev.klocale.GoldenTest")
+                excludeTestsMatching("dev.klocale.FormatStringTest")
+            }
+        }
     }
 }
