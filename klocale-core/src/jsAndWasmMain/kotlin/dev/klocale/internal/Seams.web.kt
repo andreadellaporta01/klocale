@@ -1,0 +1,168 @@
+package dev.klocale.internal
+
+import dev.klocale.NumberFormatError
+import dev.klocale.NumberStyle
+import dev.klocale.RoundingMode
+import dev.klocale.SignDisplay
+
+internal actual val backendName: String = "Intl"
+
+internal actual fun currentLocaleTag(): String {
+    val tag = resolvedLocale("")
+    return tag.ifEmpty { "en-US" }
+}
+
+internal actual fun platformLocaleInfo(languageTag: String): LocaleInfo? {
+    val canonical = resolvedLocale(languageTag)
+    if (canonical.isEmpty()) return null
+    val seps = localeSeparators(languageTag).split('|')
+    val group = seps.getOrNull(0)?.firstOrNull() ?: ','
+    val decimal = seps.getOrNull(1)?.firstOrNull() ?: '.'
+    return LocaleInfo(canonicalTag = canonical, decimalSeparator = decimal, groupingSeparator = group)
+}
+
+internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter {
+    return when (val style = spec.style) {
+        is NumberStyle.Decimal -> DecimalWebFormatter(spec.localeTag, style)
+        is NumberStyle.Currency -> CurrencyWebFormatter(spec.localeTag, style)
+        is NumberStyle.Percent -> PercentWebFormatter(spec.localeTag, style)
+        is NumberStyle.Scientific -> ScientificWebFormatter(spec.localeTag, style)
+        else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
+    }
+}
+
+private class CurrencyWebFormatter(
+    private val localeTag: String,
+    private val style: NumberStyle.Currency,
+) : PlatformFormatter {
+
+    private val options: String = buildString {
+        append("{\"style\":\"currency\"")
+        append(",\"currency\":\"").append(style.currencyCode).append('"')
+        val display = when (style.presentation) {
+            NumberStyle.Currency.Presentation.ISO_CODE -> "code"
+            else -> "symbol"
+        }
+        append(",\"currencyDisplay\":\"").append(display).append('"')
+        if (style.presentation == NumberStyle.Currency.Presentation.ACCOUNTING) {
+            append(",\"currencySign\":\"accounting\"")
+        }
+        append(",\"useGrouping\":").append(style.grouping)
+        append(",\"roundingMode\":\"").append(style.rounding.toIntl()).append('"')
+        append(",\"signDisplay\":\"").append(style.signDisplay.toIntl()).append('"')
+        style.minFractionDigits?.let { append(",\"minimumFractionDigits\":").append(it) }
+        style.maxFractionDigits?.let { append(",\"maximumFractionDigits\":").append(it) }
+        append('}')
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble ->
+            if (!value.value.isFinite()) nonFinite(value.value) else intlFormat(localeTag, options, value.value)
+        is DecimalInput.OfLong -> intlFormat(localeTag, options, value.value.toDouble())
+        is DecimalInput.OfString -> intlFormatString(localeTag, options, value.value)
+    }
+}
+
+private class DecimalWebFormatter(
+    private val localeTag: String,
+    private val style: NumberStyle.Decimal,
+) : PlatformFormatter {
+
+    private val options: String = buildString {
+        append("{\"style\":\"decimal\"")
+        append(",\"useGrouping\":").append(style.grouping)
+        append(",\"minimumFractionDigits\":").append(style.minFractionDigits)
+        append(",\"maximumFractionDigits\":").append(style.maxFractionDigits)
+        append(",\"roundingMode\":\"").append(style.rounding.toIntl()).append('"')
+        append(",\"signDisplay\":\"").append(style.signDisplay.toIntl()).append('"')
+        append('}')
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble ->
+            if (!value.value.isFinite()) nonFinite(value.value) else intlFormat(localeTag, options, value.value)
+        is DecimalInput.OfLong -> intlFormat(localeTag, options, value.value.toDouble())
+        is DecimalInput.OfString -> intlFormatString(localeTag, options, value.value)
+    }
+}
+
+private class PercentWebFormatter(
+    private val localeTag: String,
+    private val style: NumberStyle.Percent,
+) : PlatformFormatter {
+
+    private val options: String = buildString {
+        append("{\"style\":\"percent\"")
+        append(",\"minimumFractionDigits\":").append(style.minFractionDigits)
+        append(",\"maximumFractionDigits\":").append(style.maxFractionDigits)
+        append(",\"roundingMode\":\"").append(style.rounding.toIntl()).append('"')
+        append('}')
+    }
+
+    override fun format(value: DecimalInput): String {
+        val ratio = ratioOf(value, style.scale)
+        return if (!ratio.isFinite()) nonFinite(ratio) else intlFormat(localeTag, options, ratio)
+    }
+}
+
+private class ScientificWebFormatter(
+    private val localeTag: String,
+    style: NumberStyle.Scientific,
+) : PlatformFormatter {
+
+    private val options: String = buildString {
+        append("{\"notation\":\"").append(if (style.engineering) "engineering" else "scientific").append('"')
+        append(",\"maximumFractionDigits\":").append(style.maxFractionDigits)
+        append('}')
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else intlFormat(localeTag, options, value.value)
+        is DecimalInput.OfLong -> intlFormat(localeTag, options, value.value.toDouble())
+        is DecimalInput.OfString -> intlFormatString(localeTag, options, value.value)
+    }
+}
+
+private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
+    val base = when (value) {
+        is DecimalInput.OfDouble -> value.value
+        is DecimalInput.OfLong -> value.value.toDouble()
+        is DecimalInput.OfString -> value.value.toDouble()
+    }
+    return if (scale == NumberStyle.Percent.Scale.VALUE) base / 100.0 else base
+}
+
+private fun SignDisplay.toIntl(): String = when (this) {
+    SignDisplay.AUTO -> "auto"
+    SignDisplay.ALWAYS -> "always"
+    SignDisplay.NEVER -> "never"
+    SignDisplay.EXCEPT_ZERO -> "exceptZero"
+}
+
+private fun RoundingMode.toIntl(): String = when (this) {
+    RoundingMode.HALF_UP -> "halfExpand"
+    RoundingMode.HALF_EVEN -> "halfEven"
+    RoundingMode.HALF_DOWN -> "halfTrunc"
+    RoundingMode.UP -> "expand"
+    RoundingMode.DOWN -> "trunc"
+    RoundingMode.CEILING -> "ceil"
+    RoundingMode.FLOOR -> "floor"
+}
+
+private fun nonFinite(value: Double): String = when {
+    value.isNaN() -> "NaN"
+    value > 0 -> "∞"
+    else -> "-∞"
+}
+
+private fun intlFormat(locale: String, optionsJson: String, value: Double): String =
+    js("new Intl.NumberFormat(locale, JSON.parse(optionsJson)).format(value)")
+
+private fun intlFormatString(locale: String, optionsJson: String, value: String): String =
+    js("new Intl.NumberFormat(locale, JSON.parse(optionsJson)).format(value)")
+
+private fun resolvedLocale(locale: String): String =
+    js("(function(){try{return new Intl.NumberFormat(locale===''?undefined:locale).resolvedOptions().locale;}catch(e){return '';}})()")
+
+private fun localeSeparators(locale: String): String =
+    js("(function(){var p=new Intl.NumberFormat(locale).formatToParts(11111.1);var g='',d='';for(var i=0;i<p.length;i++){if(p[i].type==='group')g=p[i].value;if(p[i].type==='decimal')d=p[i].value;}return g+'|'+d;})()")

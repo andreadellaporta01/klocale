@@ -1,0 +1,25 @@
+[versions]
+kotlin = "2.1.0"
+agp = "8.7.3"
+compose = "1.7.3"
+android-minSdk = "24"
+android-compileSdk = "35"
+icu4j = "76.1"
+kotest = "5.9.1"
+vanniktech-publish = "0.30.0"
+dokka = "1.9.20"
+binary-compat = "0.16.3"
+
+[libraries]
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+binary-compat = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compat" }

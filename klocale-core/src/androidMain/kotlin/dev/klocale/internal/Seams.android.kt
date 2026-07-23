@@ -1,0 +1,203 @@
+package dev.klocale.internal
+
+import android.icu.math.BigDecimal as IcuRounding
+import android.icu.text.DecimalFormat
+import android.icu.text.DecimalFormatSymbols
+import android.icu.text.NumberFormat
+import android.icu.util.Currency
+import android.icu.util.ULocale
+import dev.klocale.NumberFormatError
+import dev.klocale.NumberStyle
+import dev.klocale.RoundingMode
+import dev.klocale.SignDisplay
+import java.math.BigDecimal
+import java.util.Locale
+
+internal actual val backendName: String = "android.icu"
+
+internal actual fun currentLocaleTag(): String = Locale.getDefault().toLanguageTag()
+
+internal actual fun platformLocaleInfo(languageTag: String): LocaleInfo? {
+    val uloc = ULocale.forLanguageTag(languageTag)
+    if (uloc.language.isNullOrEmpty()) return null
+    val symbols = DecimalFormatSymbols.getInstance(uloc)
+    return LocaleInfo(
+        canonicalTag = uloc.toLanguageTag(),
+        decimalSeparator = symbols.decimalSeparator,
+        groupingSeparator = symbols.groupingSeparator,
+    )
+}
+
+internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter {
+    val uloc = ULocale.forLanguageTag(spec.localeTag)
+    return when (val style = spec.style) {
+        is NumberStyle.Decimal -> DecimalAndroidFormatter(uloc, style)
+        is NumberStyle.Currency -> CurrencyAndroidFormatter(uloc, style)
+        is NumberStyle.Percent -> PercentAndroidFormatter(uloc, style)
+        is NumberStyle.Scientific -> ScientificAndroidFormatter(uloc, style)
+        else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
+    }
+}
+
+private class CurrencyAndroidFormatter(
+    uloc: ULocale,
+    private val style: NumberStyle.Currency,
+) : PlatformFormatter {
+
+    private val df: DecimalFormat = run {
+        val icuStyle = when (style.presentation) {
+            NumberStyle.Currency.Presentation.SYMBOL -> NumberFormat.CURRENCYSTYLE
+            NumberStyle.Currency.Presentation.ISO_CODE -> NumberFormat.ISOCURRENCYSTYLE
+            NumberStyle.Currency.Presentation.ACCOUNTING -> NumberFormat.ACCOUNTINGCURRENCYSTYLE
+        }
+        (NumberFormat.getInstance(uloc, icuStyle) as DecimalFormat).apply {
+            currency = Currency.getInstance(style.currencyCode)
+            isGroupingUsed = style.grouping
+            roundingMode = style.rounding.toIcu()
+            style.minFractionDigits?.let { minimumFractionDigits = it }
+            style.maxFractionDigits?.let { maximumFractionDigits = it }
+        }
+    }
+    private val minusSign: String = df.decimalFormatSymbols.minusSign.toString()
+
+    override fun format(value: DecimalInput): String {
+        val negative: Boolean
+        val zero: Boolean
+        val text: String
+        when (value) {
+            is DecimalInput.OfDouble -> {
+                if (!value.value.isFinite()) return nonFinite(value.value)
+                negative = value.value < 0.0
+                zero = value.value == 0.0
+                text = df.format(value.value)
+            }
+            is DecimalInput.OfLong -> {
+                negative = value.value < 0L
+                zero = value.value == 0L
+                text = df.format(value.value)
+            }
+            is DecimalInput.OfString -> {
+                val bd = BigDecimal(value.value)
+                negative = bd.signum() < 0
+                zero = bd.signum() == 0
+                text = df.format(bd as Any)
+            }
+        }
+        return applySign(text, negative, zero, style.signDisplay, minusSign)
+    }
+}
+
+private class DecimalAndroidFormatter(
+    uloc: ULocale,
+    private val style: NumberStyle.Decimal,
+) : PlatformFormatter {
+
+    private val df: DecimalFormat = (NumberFormat.getInstance(uloc) as DecimalFormat).apply {
+        isGroupingUsed = style.grouping
+        minimumFractionDigits = style.minFractionDigits
+        maximumFractionDigits = style.maxFractionDigits
+        roundingMode = style.rounding.toIcu()
+    }
+    private val minusSign: String = df.decimalFormatSymbols.minusSign.toString()
+
+    override fun format(value: DecimalInput): String {
+        val negative: Boolean
+        val zero: Boolean
+        val text: String
+        when (value) {
+            is DecimalInput.OfDouble -> {
+                if (!value.value.isFinite()) return nonFinite(value.value)
+                negative = value.value < 0.0
+                zero = value.value == 0.0
+                text = df.format(value.value)
+            }
+            is DecimalInput.OfLong -> {
+                negative = value.value < 0L
+                zero = value.value == 0L
+                text = df.format(value.value)
+            }
+            is DecimalInput.OfString -> {
+                val bd = BigDecimal(value.value)
+                negative = bd.signum() < 0
+                zero = bd.signum() == 0
+                text = df.format(bd as Any)
+            }
+        }
+        return applySign(text, negative, zero, style.signDisplay, minusSign)
+    }
+}
+
+private class PercentAndroidFormatter(
+    uloc: ULocale,
+    private val style: NumberStyle.Percent,
+) : PlatformFormatter {
+
+    private val df: DecimalFormat = (NumberFormat.getInstance(uloc, NumberFormat.PERCENTSTYLE) as DecimalFormat).apply {
+        minimumFractionDigits = style.minFractionDigits
+        maximumFractionDigits = style.maxFractionDigits
+        roundingMode = style.rounding.toIcu()
+    }
+
+    override fun format(value: DecimalInput): String {
+        val ratio = ratioOf(value, style.scale)
+        return if (!ratio.isFinite()) nonFinite(ratio) else df.format(ratio)
+    }
+}
+
+private class ScientificAndroidFormatter(
+    uloc: ULocale,
+    style: NumberStyle.Scientific,
+) : PlatformFormatter {
+
+    private val df: DecimalFormat = (NumberFormat.getInstance(uloc, NumberFormat.SCIENTIFICSTYLE) as DecimalFormat).apply {
+        maximumFractionDigits = style.maxFractionDigits
+        if (style.engineering) {
+            minimumIntegerDigits = 1
+            maximumIntegerDigits = 3
+        }
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else df.format(value.value)
+        is DecimalInput.OfLong -> df.format(value.value)
+        is DecimalInput.OfString -> df.format(BigDecimal(value.value) as Any)
+    }
+}
+
+private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
+    val base = when (value) {
+        is DecimalInput.OfDouble -> value.value
+        is DecimalInput.OfLong -> value.value.toDouble()
+        is DecimalInput.OfString -> value.value.toDouble()
+    }
+    return if (scale == NumberStyle.Percent.Scale.VALUE) base / 100.0 else base
+}
+
+private fun applySign(
+    text: String,
+    negative: Boolean,
+    zero: Boolean,
+    signDisplay: SignDisplay,
+    minusSign: String,
+): String = when (signDisplay) {
+    SignDisplay.AUTO -> text
+    SignDisplay.NEVER -> if (negative) text.replaceFirst(minusSign, "") else text
+    SignDisplay.ALWAYS -> if (!negative) "+$text" else text
+    SignDisplay.EXCEPT_ZERO -> if (!negative && !zero) "+$text" else text
+}
+
+private fun nonFinite(value: Double): String = when {
+    value.isNaN() -> "NaN"
+    value > 0 -> "∞"
+    else -> "-∞"
+}
+
+private fun RoundingMode.toIcu(): Int = when (this) {
+    RoundingMode.HALF_UP -> IcuRounding.ROUND_HALF_UP
+    RoundingMode.HALF_EVEN -> IcuRounding.ROUND_HALF_EVEN
+    RoundingMode.HALF_DOWN -> IcuRounding.ROUND_HALF_DOWN
+    RoundingMode.UP -> IcuRounding.ROUND_UP
+    RoundingMode.DOWN -> IcuRounding.ROUND_DOWN
+    RoundingMode.CEILING -> IcuRounding.ROUND_CEILING
+    RoundingMode.FLOOR -> IcuRounding.ROUND_FLOOR
+}
