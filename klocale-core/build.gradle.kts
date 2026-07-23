@@ -65,6 +65,10 @@ kotlin {
     }
 }
 
+mavenPublishing {
+    signAllPublications()
+}
+
 android {
     namespace = "dev.klocale.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
