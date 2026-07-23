@@ -5,7 +5,6 @@ package dev.klocale.internal
 import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
-import dev.klocale.SignDisplay
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.math.round
@@ -339,37 +338,9 @@ private class CompactAppleFormatter(
     }
 }
 
-private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
-    val base = when (value) {
-        is DecimalInput.OfDouble -> value.value
-        is DecimalInput.OfLong -> value.value.toDouble()
-        is DecimalInput.OfString -> value.value.toDouble()
-    }
-    return if (scale == NumberStyle.Percent.Scale.VALUE) base / 100.0 else base
-}
-
-private fun applySign(
-    text: String,
-    negative: Boolean,
-    zero: Boolean,
-    signDisplay: SignDisplay,
-    minus: String,
-): String = when (signDisplay) {
-    SignDisplay.AUTO -> text
-    SignDisplay.NEVER -> if (negative) text.replaceFirst(minus, "").removeSurrounding("(", ")") else text
-    SignDisplay.ALWAYS -> if (!negative) "+$text" else text
-    SignDisplay.EXCEPT_ZERO -> if (!negative && !zero) "+$text" else text
-}
-
 private fun looksLikeLanguageTag(tag: String): Boolean {
     val lang = tag.substringBefore('-').substringBefore('_')
     return lang.length in 2..3 && lang.all { it in 'a'..'z' || it in 'A'..'Z' }
-}
-
-private fun nonFinite(value: Double): String = when {
-    value.isNaN() -> "NaN"
-    value > 0 -> "∞"
-    else -> "-∞"
 }
 
 private fun RoundingMode.toNs(): NSNumberFormatterRoundingMode = when (this) {

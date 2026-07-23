@@ -245,15 +245,6 @@ private fun intlUnit(unit: MeasureUnit): String = when (unit) {
     MeasureUnit.DAY -> "day"
 }
 
-private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
-    val base = when (value) {
-        is DecimalInput.OfDouble -> value.value
-        is DecimalInput.OfLong -> value.value.toDouble()
-        is DecimalInput.OfString -> value.value.toDouble()
-    }
-    return if (scale == NumberStyle.Percent.Scale.VALUE) base / 100.0 else base
-}
-
 private fun SignDisplay.toIntl(): String = when (this) {
     SignDisplay.AUTO -> "auto"
     SignDisplay.ALWAYS -> "always"
@@ -269,12 +260,6 @@ private fun RoundingMode.toIntl(): String = when (this) {
     RoundingMode.DOWN -> "trunc"
     RoundingMode.CEILING -> "ceil"
     RoundingMode.FLOOR -> "floor"
-}
-
-private fun nonFinite(value: Double): String = when {
-    value.isNaN() -> "NaN"
-    value > 0 -> "∞"
-    else -> "-∞"
 }
 
 internal expect fun intlFormat(locale: String, optionsJson: String, value: Double): String
