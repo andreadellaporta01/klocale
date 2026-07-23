@@ -2,24 +2,27 @@ package dev.klocale
 
 import dev.klocale.internal.currentLocaleTag
 import dev.klocale.internal.platformLocaleInfo
-import kotlin.jvm.JvmInline
 
 /**
  * A locale identified by a BCP-47 language tag (e.g. `"en-US"`, `"it-IT"`).
  *
- * Instances are cheap value wrappers; locale-dependent data (separators) is resolved
- * lazily from the underlying platform locale database.
+ * Locale-dependent data (separators) is resolved once from the platform locale database and cached.
  */
-@JvmInline
-public value class NumberLocale internal constructor(public val languageTag: String) {
+public class NumberLocale internal constructor(public val languageTag: String) {
+
+    private val info by lazy { platformLocaleInfo(languageTag) }
 
     /** The locale's decimal separator (e.g. `'.'` for en-US, `','` for it-IT). */
     public val decimalSeparator: Char
-        get() = platformLocaleInfo(languageTag)?.decimalSeparator ?: '.'
+        get() = info?.decimalSeparator ?: '.'
 
     /** The locale's grouping separator (e.g. `','` for en-US, `'.'` for it-IT). */
     public val groupingSeparator: Char
-        get() = platformLocaleInfo(languageTag)?.groupingSeparator ?: ','
+        get() = info?.groupingSeparator ?: ','
+
+    override fun equals(other: Any?): Boolean = other is NumberLocale && other.languageTag == languageTag
+
+    override fun hashCode(): Int = languageTag.hashCode()
 
     override fun toString(): String = "NumberLocale($languageTag)"
 

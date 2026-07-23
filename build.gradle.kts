@@ -7,3 +7,7 @@ plugins {
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.binary.compat)
 }
+
+apiValidation {
+    ignoredProjects += "klocale-testkit"
+}

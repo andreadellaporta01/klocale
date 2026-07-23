@@ -90,58 +90,52 @@ public abstract interface class dev/klocale/NumberFormatter {
 	public abstract fun format (D)Ljava/lang/String;
 	public abstract fun format (J)Ljava/lang/String;
 	public abstract fun format (Ljava/lang/String;)Ljava/lang/String;
-	public abstract fun getLocale-iVMFh_o ()Ljava/lang/String;
+	public abstract fun getLocale ()Ldev/klocale/NumberLocale;
 	public abstract fun getPolicy ()Ldev/klocale/NormalizationPolicy;
 	public abstract fun getStyle ()Ldev/klocale/NumberStyle;
 }
 
 public final class dev/klocale/NumberFormatter$Companion {
-	public final fun invoke-gJFU-vg (Ldev/klocale/NumberStyle;Ljava/lang/String;Ldev/klocale/NormalizationPolicy;)Ljava/lang/Object;
-	public static synthetic fun invoke-gJFU-vg$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ljava/lang/String;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ljava/lang/Object;
-	public final fun orThrow-qbqcekk (Ldev/klocale/NumberStyle;Ljava/lang/String;Ldev/klocale/NormalizationPolicy;)Ldev/klocale/NumberFormatter;
-	public static synthetic fun orThrow-qbqcekk$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ljava/lang/String;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ldev/klocale/NumberFormatter;
+	public final fun invoke-0E7RQCE (Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;)Ljava/lang/Object;
+	public static synthetic fun invoke-0E7RQCE$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun orThrow (Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;)Ldev/klocale/NumberFormatter;
+	public static synthetic fun orThrow$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ldev/klocale/NumberFormatter;
 }
 
 public final class dev/klocale/NumberFormatterKt {
-	public static final fun formatCompact-DbftIhs (DLjava/lang/String;)Ljava/lang/String;
-	public static synthetic fun formatCompact-DbftIhs$default (DLjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
-	public static final fun formatCurrency-EamfKxM (DLjava/lang/String;Ljava/lang/String;)Ljava/lang/String;
-	public static synthetic fun formatCurrency-EamfKxM$default (DLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
-	public static final fun formatDecimal-DbftIhs (DLjava/lang/String;)Ljava/lang/String;
-	public static synthetic fun formatDecimal-DbftIhs$default (DLjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
-	public static final fun formatPercent-DbftIhs (DLjava/lang/String;)Ljava/lang/String;
-	public static synthetic fun formatPercent-DbftIhs$default (DLjava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun formatCompact (DLdev/klocale/NumberLocale;)Ljava/lang/String;
+	public static synthetic fun formatCompact$default (DLdev/klocale/NumberLocale;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun formatCurrency (DLjava/lang/String;Ldev/klocale/NumberLocale;)Ljava/lang/String;
+	public static synthetic fun formatCurrency$default (DLjava/lang/String;Ldev/klocale/NumberLocale;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun formatDecimal (DLdev/klocale/NumberLocale;)Ljava/lang/String;
+	public static synthetic fun formatDecimal$default (DLdev/klocale/NumberLocale;ILjava/lang/Object;)Ljava/lang/String;
+	public static final fun formatPercent (DLdev/klocale/NumberLocale;)Ljava/lang/String;
+	public static synthetic fun formatPercent$default (DLdev/klocale/NumberLocale;ILjava/lang/Object;)Ljava/lang/String;
 }
 
 public final class dev/klocale/NumberLocale {
 	public static final field Companion Ldev/klocale/NumberLocale$Companion;
-	public static final synthetic fun box-impl (Ljava/lang/String;)Ldev/klocale/NumberLocale;
 	public fun equals (Ljava/lang/Object;)Z
-	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
-	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
-	public static final fun getDecimalSeparator-impl (Ljava/lang/String;)C
-	public static final fun getGroupingSeparator-impl (Ljava/lang/String;)C
+	public final fun getDecimalSeparator ()C
+	public final fun getGroupingSeparator ()C
 	public final fun getLanguageTag ()Ljava/lang/String;
 	public fun hashCode ()I
-	public static fun hashCode-impl (Ljava/lang/String;)I
 	public fun toString ()Ljava/lang/String;
-	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
-	public final synthetic fun unbox-impl ()Ljava/lang/String;
 }
 
 public final class dev/klocale/NumberLocale$Companion {
-	public final fun current-iVMFh_o ()Ljava/lang/String;
+	public final fun current ()Ldev/klocale/NumberLocale;
 	public final fun fromLanguageTag-IoAF18A (Ljava/lang/String;)Ljava/lang/Object;
-	public final fun getBRAZIL-iVMFh_o ()Ljava/lang/String;
-	public final fun getCHINA-iVMFh_o ()Ljava/lang/String;
-	public final fun getFRANCE-iVMFh_o ()Ljava/lang/String;
-	public final fun getGERMANY-iVMFh_o ()Ljava/lang/String;
-	public final fun getINDIA-iVMFh_o ()Ljava/lang/String;
-	public final fun getITALY-iVMFh_o ()Ljava/lang/String;
-	public final fun getJAPAN-iVMFh_o ()Ljava/lang/String;
-	public final fun getSPAIN-iVMFh_o ()Ljava/lang/String;
-	public final fun getUK-iVMFh_o ()Ljava/lang/String;
-	public final fun getUS-iVMFh_o ()Ljava/lang/String;
+	public final fun getBRAZIL ()Ldev/klocale/NumberLocale;
+	public final fun getCHINA ()Ldev/klocale/NumberLocale;
+	public final fun getFRANCE ()Ldev/klocale/NumberLocale;
+	public final fun getGERMANY ()Ldev/klocale/NumberLocale;
+	public final fun getINDIA ()Ldev/klocale/NumberLocale;
+	public final fun getITALY ()Ldev/klocale/NumberLocale;
+	public final fun getJAPAN ()Ldev/klocale/NumberLocale;
+	public final fun getSPAIN ()Ldev/klocale/NumberLocale;
+	public final fun getUK ()Ldev/klocale/NumberLocale;
+	public final fun getUS ()Ldev/klocale/NumberLocale;
 }
 
 public abstract interface class dev/klocale/NumberStyle {

@@ -56,6 +56,13 @@ kotlin {
                 implementation(projects.klocaleTestkit)
             }
         }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.robolectric)
+                implementation(libs.junit)
+            }
+        }
     }
 }
 
@@ -64,5 +71,8 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 }

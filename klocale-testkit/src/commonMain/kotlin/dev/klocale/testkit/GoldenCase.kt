@@ -2,6 +2,7 @@ package dev.klocale.testkit
 
 import dev.klocale.MeasureUnit
 import dev.klocale.NumberStyle
+import dev.klocale.SignDisplay
 import dev.klocale.TimeUnit
 
 /** The runtime backend a test is executing on. */
@@ -80,4 +81,7 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("dec_en_halfeven_down", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0), "2.5", "2"),
     GoldenCase("dec_en_halfeven_up", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0), "3.5", "4"),
     GoldenCase("dec_en_large", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0), "1234567890", "1,234,567,890"),
+    GoldenCase("dec_en_sign_always_pos", "en-US", NumberStyle.Decimal(minFractionDigits = 2, maxFractionDigits = 2, signDisplay = SignDisplay.ALWAYS), "1234.56", "+1,234.56"),
+    GoldenCase("dec_en_sign_always_neg", "en-US", NumberStyle.Decimal(minFractionDigits = 2, maxFractionDigits = 2, signDisplay = SignDisplay.ALWAYS), "-1234.56", "-1,234.56"),
+    GoldenCase("dec_en_sign_never", "en-US", NumberStyle.Decimal(minFractionDigits = 2, maxFractionDigits = 2, signDisplay = SignDisplay.NEVER), "-1234.56", "1,234.56"),
 )

@@ -356,7 +356,7 @@ private fun applySign(
     minus: String,
 ): String = when (signDisplay) {
     SignDisplay.AUTO -> text
-    SignDisplay.NEVER -> if (negative) text.replaceFirst(minus, "") else text
+    SignDisplay.NEVER -> if (negative) text.replaceFirst(minus, "").removeSurrounding("(", ")") else text
     SignDisplay.ALWAYS -> if (!negative) "+$text" else text
     SignDisplay.EXCEPT_ZERO -> if (!negative && !zero) "+$text" else text
 }

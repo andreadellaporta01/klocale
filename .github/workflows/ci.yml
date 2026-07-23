@@ -21,6 +21,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: JVM / JS / WasmJs tests + API check
         run: ./gradlew jvmTest jsNodeTest wasmJsNodeTest apiCheck --stacktrace
+      - name: Android tests (Robolectric)
+        run: ./gradlew :klocale-core:testDebugUnitTest --tests "dev.klocale.AndroidGoldenTest" --stacktrace
 
   apple:
     runs-on: macos-latest

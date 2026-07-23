@@ -6,6 +6,8 @@ android-minSdk = "24"
 android-compileSdk = "35"
 icu4j = "76.1"
 kotest = "5.9.1"
+robolectric = "4.14.1"
+junit = "4.13.2"
 vanniktech-publish = "0.30.0"
 dokka = "1.9.20"
 binary-compat = "0.16.3"
@@ -14,6 +16,8 @@ binary-compat = "0.16.3"
 icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+junit = { module = "junit:junit", version.ref = "junit" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
