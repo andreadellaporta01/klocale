@@ -2,6 +2,7 @@ package dev.klocale.testkit
 
 import dev.klocale.MeasureUnit
 import dev.klocale.NumberStyle
+import dev.klocale.RoundingMode
 import dev.klocale.SignDisplay
 import dev.klocale.TimeUnit
 
@@ -73,13 +74,19 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("spell_en_neg", "en-US", NumberStyle.Spellout(), "-5", "minus five", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS, Platform.ANDROID)),
     GoldenCase("rel_en_in3d", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "3", "in 3 days"),
     GoldenCase("rel_en_2dago", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "-2", "2 days ago"),
-    GoldenCase("meas_en_km", "en-US", NumberStyle.Measure(MeasureUnit.KILOMETER), "12.5", "12.5 km", unsupportedOn = setOf(Platform.MACOS)),
+    GoldenCase("meas_en_km", "en-US", NumberStyle.Measure(MeasureUnit.KILOMETER), "12.5", "12.5 km", unsupportedOn = setOf(Platform.MACOS, Platform.IOS)),
     GoldenCase("cur_en_zero", "en-US", NumberStyle.Currency("USD"), "0", "\$0.00"),
     GoldenCase("pct_en_zero", "en-US", NumberStyle.Percent(), "0", "0%"),
     GoldenCase("cmp_en_neg", "en-US", NumberStyle.Compact(), "-1200", "-1.2K"),
     GoldenCase("cmp_en_1k", "en-US", NumberStyle.Compact(), "1000", "1K"),
     GoldenCase("sci_en_neg", "en-US", NumberStyle.Scientific(), "-12345", "-1.2345E4"),
     GoldenCase("ord_en_0", "en-US", NumberStyle.Ordinal(), "0", "0th"),
+    GoldenCase("rnd_halfup", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0, rounding = RoundingMode.HALF_UP), "2.5", "3"),
+    GoldenCase("rnd_halfdown", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0, rounding = RoundingMode.HALF_DOWN), "2.5", "2"),
+    GoldenCase("rnd_up", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0, rounding = RoundingMode.UP), "2.1", "3"),
+    GoldenCase("rnd_down", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0, rounding = RoundingMode.DOWN), "2.9", "2"),
+    GoldenCase("rnd_ceil_neg", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0, rounding = RoundingMode.CEILING), "-2.1", "-2"),
+    GoldenCase("rnd_floor_neg", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0, rounding = RoundingMode.FLOOR), "-2.1", "-3"),
     GoldenCase("cur_en_usd_neg", "en-US", NumberStyle.Currency("USD"), "-1234.5", "-\$1,234.50"),
     GoldenCase("pct_en_neg", "en-US", NumberStyle.Percent(), "-0.42", "-42%"),
     GoldenCase("cmp_en_rollover_m", "en-US", NumberStyle.Compact(), "999999", "1M"),

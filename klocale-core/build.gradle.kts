@@ -52,7 +52,6 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-                implementation(libs.kotest.property)
                 implementation(projects.klocaleTestkit)
             }
         }
