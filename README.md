@@ -40,12 +40,14 @@ val f = NumberFormatter.orThrow(
 f.format(-1234.5)                                       // "($1,234.50)"
 ```
 
-Construction returns a `Result` (invalid locale / currency code / style), while formatting a
-finite number never throws:
+Construction returns a `Result` (invalid locale / malformed currency code / unsupported style),
+while formatting a finite number never throws:
 
 ```kotlin
-NumberFormatter(NumberStyle.Currency("XYZ"))            // Result.failure(InvalidCurrencyCode)
+NumberFormatter(NumberStyle.Currency("US1"))            // Result.failure(InvalidCurrencyCode)
 ```
+
+The currency code is validated for shape (three ASCII letters), not against the ISO 4217 registry.
 
 ### Compose Multiplatform
 
@@ -75,9 +77,10 @@ with wrong output. See the roadmap below for gaps being closed.
 
 ## Consistency
 
-Output is verified by a shared golden-test table run on every backend (`jvmTest`,
-`macosArm64Test`, `jsNodeTest`, `wasmJsNodeTest`), which also asserts that each backend correctly
-rejects the styles it cannot support.
+Output is verified by a shared golden-test table run on every backend — `jvmTest`,
+`macosArm64Test`, `iosSimulatorArm64Test`, `jsNodeTest`, `wasmJsNodeTest` and the Android
+Robolectric test — which also asserts that each backend correctly rejects the styles it cannot
+support.
 
 ## Roadmap
 

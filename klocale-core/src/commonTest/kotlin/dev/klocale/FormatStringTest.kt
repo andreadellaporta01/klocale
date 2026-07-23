@@ -3,6 +3,7 @@ package dev.klocale
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class FormatStringTest {
 
@@ -11,6 +12,14 @@ class FormatStringTest {
         val formatter = NumberFormatter.orThrow(NumberStyle.Decimal(), NumberLocale.US)
         assertFailsWith<IllegalArgumentException> { formatter.format("abc") }
         assertFailsWith<IllegalArgumentException> { formatter.format("1,234") }
+    }
+
+    @Test
+    fun currencyCodeIsValidatedByShapeOnly() {
+        val malformed = NumberFormatter(NumberStyle.Currency("US1"), NumberLocale.US)
+        assertTrue(malformed.exceptionOrNull() is NumberFormatError.InvalidCurrencyCode)
+        // Shape-valid but not a real ISO 4217 code: accepted (not checked against the registry).
+        assertTrue(NumberFormatter(NumberStyle.Currency("XYZ"), NumberLocale.US).isSuccess)
     }
 
     @Test
