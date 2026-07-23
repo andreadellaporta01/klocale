@@ -5,7 +5,6 @@ package dev.klocale
  * the locale describes *how* to render it.
  */
 public sealed interface NumberStyle {
-
     /** Plain decimal number, e.g. `1,234.56`. */
     public data class Decimal(
         val minFractionDigits: Int = 0,
@@ -80,21 +79,44 @@ public sealed interface NumberStyle {
         val numeric: Numeric = Numeric.AUTO,
     ) : NumberStyle {
         public enum class Width { NARROW, SHORT, LONG }
+
         public enum class Numeric { ALWAYS, AUTO }
     }
 }
 
 /** Units supported by [NumberStyle.Measure]. */
 public enum class MeasureUnit {
-    METER, KILOMETER, CENTIMETER, MILE, FOOT,
-    GRAM, KILOGRAM, POUND, OUNCE,
-    LITER, MILLILITER,
-    CELSIUS, FAHRENHEIT,
-    BYTE, KILOBYTE, MEGABYTE, GIGABYTE,
-    SECOND, MINUTE, HOUR, DAY,
+    METER,
+    KILOMETER,
+    CENTIMETER,
+    MILE,
+    FOOT,
+    GRAM,
+    KILOGRAM,
+    POUND,
+    OUNCE,
+    LITER,
+    MILLILITER,
+    CELSIUS,
+    FAHRENHEIT,
+    BYTE,
+    KILOBYTE,
+    MEGABYTE,
+    GIGABYTE,
+    SECOND,
+    MINUTE,
+    HOUR,
+    DAY,
 }
 
 /** Time units supported by [NumberStyle.RelativeTime]. */
 public enum class TimeUnit {
-    SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR,
+    SECOND,
+    MINUTE,
+    HOUR,
+    DAY,
+    WEEK,
+    MONTH,
+    QUARTER,
+    YEAR,
 }

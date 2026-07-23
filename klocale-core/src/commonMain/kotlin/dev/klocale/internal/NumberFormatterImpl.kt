@@ -11,7 +11,6 @@ internal class NumberFormatterImpl(
     override val policy: NormalizationPolicy,
     private val platform: PlatformFormatter,
 ) : NumberFormatter {
-
     override fun format(value: Double): String =
         OutputNormalizer.apply(platform.format(DecimalInput.OfDouble(value)), policy)
 

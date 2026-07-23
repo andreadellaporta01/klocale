@@ -6,13 +6,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class GoldenTest {
-
     @Test
     fun allGoldenCasesMatchOnThisPlatform() {
         val failures = mutableListOf<String>()
         for (case in GOLDEN_CASES) {
             val locale = NumberLocale.fromLanguageTag(case.locale).getOrThrow()
-            val result = NumberFormatter(case.style, locale)
+            val result = NumberFormatter.of(case.style, locale)
             if (currentPlatform in case.unsupportedOn) {
                 if (result.isSuccess) {
                     failures += "[${case.id}@$currentPlatform] expected UnsupportedStyle but construction succeeded"

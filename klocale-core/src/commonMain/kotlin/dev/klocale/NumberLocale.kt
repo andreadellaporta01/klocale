@@ -9,7 +9,6 @@ import dev.klocale.internal.platformLocaleInfo
  * Locale-dependent data (separators) is resolved once from the platform locale database and cached.
  */
 public class NumberLocale internal constructor(public val languageTag: String) {
-
     private val info by lazy { platformLocaleInfo(languageTag) }
 
     /** The locale's decimal separator (e.g. `'.'` for en-US, `','` for it-IT). */

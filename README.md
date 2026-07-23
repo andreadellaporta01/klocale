@@ -44,7 +44,7 @@ Construction returns a `Result` (invalid locale / malformed currency code / unsu
 while formatting a finite number never throws:
 
 ```kotlin
-NumberFormatter(NumberStyle.Currency("US1"))            // Result.failure(InvalidCurrencyCode)
+NumberFormatter.of(NumberStyle.Currency("US1"))         // Result.failure(InvalidCurrencyCode)
 ```
 
 The currency code is validated for shape (three ASCII letters), not against the ISO 4217 registry.

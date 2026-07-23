@@ -96,8 +96,8 @@ public abstract interface class dev/klocale/NumberFormatter {
 }
 
 public final class dev/klocale/NumberFormatter$Companion {
-	public final fun invoke-0E7RQCE (Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;)Ljava/lang/Object;
-	public static synthetic fun invoke-0E7RQCE$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ljava/lang/Object;
+	public final fun of-0E7RQCE (Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;)Ljava/lang/Object;
+	public static synthetic fun of-0E7RQCE$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun orThrow (Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;)Ldev/klocale/NumberFormatter;
 	public static synthetic fun orThrow$default (Ldev/klocale/NumberFormatter$Companion;Ldev/klocale/NumberStyle;Ldev/klocale/NumberLocale;Ldev/klocale/NormalizationPolicy;ILjava/lang/Object;)Ldev/klocale/NumberFormatter;
 }

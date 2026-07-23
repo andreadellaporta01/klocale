@@ -22,6 +22,7 @@ public interface NumberFormatter {
     public val policy: NormalizationPolicy
 
     public fun format(value: Double): String
+
     public fun format(value: Long): String
 
     /**
@@ -38,24 +39,26 @@ public interface NumberFormatter {
          * Builds a formatter, returning a failed [Result] with a [NumberFormatError] when the
          * locale, currency code, fraction range or style is invalid on this platform.
          */
-        public operator fun invoke(
+        public fun of(
             style: NumberStyle,
             locale: NumberLocale = NumberLocale.current(),
             policy: NormalizationPolicy = NormalizationPolicy.Default,
-        ): Result<NumberFormatter> = runCatching {
-            val info = platformLocaleInfo(locale.languageTag)
-                ?: throw NumberFormatError.InvalidLocale(locale.languageTag)
-            validate(style)
-            val platform = createPlatformFormatter(FormatSpec(info.canonicalTag, style))
-            NumberFormatterImpl(locale, style, policy, platform)
-        }
+        ): Result<NumberFormatter> =
+            runCatching {
+                val info =
+                    platformLocaleInfo(locale.languageTag)
+                        ?: throw NumberFormatError.InvalidLocale(locale.languageTag)
+                validate(style)
+                val platform = createPlatformFormatter(FormatSpec(info.canonicalTag, style))
+                NumberFormatterImpl(locale, style, policy, platform)
+            }
 
-        /** Like [invoke] but throws the [NumberFormatError] instead of returning a [Result]. */
+        /** Like [of] but throws the [NumberFormatError] instead of returning a [Result]. */
         public fun orThrow(
             style: NumberStyle,
             locale: NumberLocale = NumberLocale.current(),
             policy: NormalizationPolicy = NormalizationPolicy.Default,
-        ): NumberFormatter = invoke(style, locale, policy).getOrThrow()
+        ): NumberFormatter = of(style, locale, policy).getOrThrow()
     }
 }
 
@@ -73,7 +76,10 @@ private fun validate(style: NumberStyle) {
     }
 }
 
-private fun checkFraction(min: Int, max: Int) {
+private fun checkFraction(
+    min: Int,
+    max: Int,
+) {
     if (min < 0 || max < 0 || min > max) throw NumberFormatError.InvalidFractionRange(min, max)
 }
 
@@ -84,17 +90,30 @@ private fun checkCurrency(code: String) {
 }
 
 /** Convenience: format [value] as a plain decimal in [locale]. */
-public fun formatDecimal(value: Double, locale: NumberLocale = NumberLocale.current()): String =
+public fun formatDecimal(
+    value: Double,
+    locale: NumberLocale = NumberLocale.current(),
+): String =
     NumberFormatter.orThrow(NumberStyle.Decimal(), locale).format(value)
 
 /** Convenience: format [value] as [currencyCode] currency in [locale]. */
-public fun formatCurrency(value: Double, currencyCode: String, locale: NumberLocale = NumberLocale.current()): String =
+public fun formatCurrency(
+    value: Double,
+    currencyCode: String,
+    locale: NumberLocale = NumberLocale.current(),
+): String =
     NumberFormatter.orThrow(NumberStyle.Currency(currencyCode), locale).format(value)
 
 /** Convenience: format a ratio [value] (0.42 → 42%) in [locale]. */
-public fun formatPercent(value: Double, locale: NumberLocale = NumberLocale.current()): String =
+public fun formatPercent(
+    value: Double,
+    locale: NumberLocale = NumberLocale.current(),
+): String =
     NumberFormatter.orThrow(NumberStyle.Percent(), locale).format(value)
 
 /** Convenience: format [value] in compact notation (1200 → 1.2K) in [locale]. */
-public fun formatCompact(value: Double, locale: NumberLocale = NumberLocale.current()): String =
+public fun formatCompact(
+    value: Double,
+    locale: NumberLocale = NumberLocale.current(),
+): String =
     NumberFormatter.orThrow(NumberStyle.Compact(), locale).format(value)

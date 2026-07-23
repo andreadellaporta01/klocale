@@ -2,7 +2,6 @@ package dev.klocale
 
 /** Errors that can occur while *constructing* a [NumberFormatter]. Formatting itself never throws. */
 public sealed class NumberFormatError(message: String) : Exception(message) {
-
     /** The language tag was not recognized by the platform locale database. */
     public class InvalidLocale(public val tag: String) :
         NumberFormatError("Unknown locale language tag: '$tag'")

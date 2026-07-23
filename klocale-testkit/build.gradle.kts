@@ -16,9 +16,15 @@ kotlin {
     iosSimulatorArm64()
     macosX64()
     macosArm64()
-    js(IR) { browser(); nodejs() }
+    js(IR) {
+        browser()
+        nodejs()
+    }
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
-    wasmJs { browser(); nodejs() }
+    wasmJs {
+        browser()
+        nodejs()
+    }
 
     applyDefaultHierarchyTemplate()
 

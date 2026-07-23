@@ -1,0 +1,9 @@
+root = true
+
+[*.{kt,kts}]
+ktlint_code_style = ktlint_official
+max_line_length = off
+
+# @Composable functions are conventionally PascalCase.
+[klocale-compose/**/*.kt]
+ktlint_standard_function-naming = disabled

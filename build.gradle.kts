@@ -6,8 +6,13 @@ plugins {
     alias(libs.plugins.vanniktech.publish) apply false
     alias(libs.plugins.dokka) apply false
     alias(libs.plugins.binary.compat)
+    alias(libs.plugins.ktlint) apply false
 }
 
 apiValidation {
     ignoredProjects += "klocale-testkit"
+}
+
+subprojects {
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 }

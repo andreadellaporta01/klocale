@@ -1,10 +1,10 @@
 package dev.klocale.compose
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.CompositionLocalProvider
 import dev.klocale.NormalizationPolicy
 import dev.klocale.NumberFormatter
 import dev.klocale.NumberLocale
@@ -19,7 +19,10 @@ public val LocalNumberLocale: ProvidableCompositionLocal<NumberLocale> =
 
 /** Overrides [LocalNumberLocale] for [content]. */
 @Composable
-public fun ProvideNumberLocale(locale: NumberLocale, content: @Composable () -> Unit) {
+public fun ProvideNumberLocale(
+    locale: NumberLocale,
+    content: @Composable () -> Unit,
+) {
     CompositionLocalProvider(LocalNumberLocale provides locale, content = content)
 }
 
@@ -33,9 +36,10 @@ public fun rememberNumberFormatter(
     style: NumberStyle,
     locale: NumberLocale = LocalNumberLocale.current,
     policy: NormalizationPolicy = NormalizationPolicy.Default,
-): NumberFormatter = remember(style, locale, policy) {
-    NumberFormatter.orThrow(style, locale, policy)
-}
+): NumberFormatter =
+    remember(style, locale, policy) {
+        NumberFormatter.orThrow(style, locale, policy)
+    }
 
 /**
  * Like [rememberNumberFormatter] but returns `null` instead of throwing when the style is invalid
@@ -46,6 +50,7 @@ public fun rememberNumberFormatterOrNull(
     style: NumberStyle,
     locale: NumberLocale = LocalNumberLocale.current,
     policy: NormalizationPolicy = NormalizationPolicy.Default,
-): NumberFormatter? = remember(style, locale, policy) {
-    NumberFormatter(style, locale, policy).getOrNull()
-}
+): NumberFormatter? =
+    remember(style, locale, policy) {
+        NumberFormatter.of(style, locale, policy).getOrNull()
+    }

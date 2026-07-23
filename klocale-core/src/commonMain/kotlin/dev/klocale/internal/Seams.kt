@@ -10,7 +10,9 @@ internal data class LocaleInfo(
 
 internal sealed interface DecimalInput {
     data class OfDouble(val value: Double) : DecimalInput
+
     data class OfLong(val value: Long) : DecimalInput
+
     data class OfString(val value: String) : DecimalInput
 }
 

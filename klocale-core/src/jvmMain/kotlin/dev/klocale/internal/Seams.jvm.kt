@@ -1,6 +1,5 @@
 package dev.klocale.internal
 
-import com.ibm.icu.math.BigDecimal as IcuRounding
 import com.ibm.icu.text.CompactDecimalFormat
 import com.ibm.icu.text.DecimalFormat
 import com.ibm.icu.text.DecimalFormatSymbols
@@ -10,16 +9,17 @@ import com.ibm.icu.text.RelativeDateTimeFormatter
 import com.ibm.icu.text.RuleBasedNumberFormat
 import com.ibm.icu.util.Currency
 import com.ibm.icu.util.Measure
-import com.ibm.icu.util.MeasureUnit as IcuMeasureUnit
 import com.ibm.icu.util.ULocale
 import dev.klocale.MeasureUnit
 import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
 import dev.klocale.TimeUnit
-import kotlin.math.abs
 import java.math.BigDecimal
 import java.util.Locale
+import kotlin.math.abs
+import com.ibm.icu.math.BigDecimal as IcuRounding
+import com.ibm.icu.util.MeasureUnit as IcuMeasureUnit
 
 internal actual val backendName: String = "icu4j"
 
@@ -57,21 +57,22 @@ private class CurrencyJvmFormatter(
     uloc: ULocale,
     private val style: NumberStyle.Currency,
 ) : PlatformFormatter {
-
-    private val df: DecimalFormat = run {
-        val icuStyle = when (style.presentation) {
-            NumberStyle.Currency.Presentation.SYMBOL -> NumberFormat.CURRENCYSTYLE
-            NumberStyle.Currency.Presentation.ISO_CODE -> NumberFormat.ISOCURRENCYSTYLE
-            NumberStyle.Currency.Presentation.ACCOUNTING -> NumberFormat.ACCOUNTINGCURRENCYSTYLE
+    private val df: DecimalFormat =
+        run {
+            val icuStyle =
+                when (style.presentation) {
+                    NumberStyle.Currency.Presentation.SYMBOL -> NumberFormat.CURRENCYSTYLE
+                    NumberStyle.Currency.Presentation.ISO_CODE -> NumberFormat.ISOCURRENCYSTYLE
+                    NumberStyle.Currency.Presentation.ACCOUNTING -> NumberFormat.ACCOUNTINGCURRENCYSTYLE
+                }
+            (NumberFormat.getInstance(uloc, icuStyle) as DecimalFormat).apply {
+                currency = Currency.getInstance(style.currencyCode)
+                isGroupingUsed = style.grouping
+                roundingMode = style.rounding.toIcu()
+                style.minFractionDigits?.let { minimumFractionDigits = it }
+                style.maxFractionDigits?.let { maximumFractionDigits = it }
+            }
         }
-        (NumberFormat.getInstance(uloc, icuStyle) as DecimalFormat).apply {
-            currency = Currency.getInstance(style.currencyCode)
-            isGroupingUsed = style.grouping
-            roundingMode = style.rounding.toIcu()
-            style.minFractionDigits?.let { minimumFractionDigits = it }
-            style.maxFractionDigits?.let { maximumFractionDigits = it }
-        }
-    }
     private val minusSign: String = df.decimalFormatSymbols.minusSign.toString()
 
     override fun format(value: DecimalInput): String {
@@ -105,13 +106,13 @@ private class DecimalJvmFormatter(
     uloc: ULocale,
     private val style: NumberStyle.Decimal,
 ) : PlatformFormatter {
-
-    private val df: DecimalFormat = (NumberFormat.getInstance(uloc) as DecimalFormat).apply {
-        isGroupingUsed = style.grouping
-        minimumFractionDigits = style.minFractionDigits
-        maximumFractionDigits = style.maxFractionDigits
-        roundingMode = style.rounding.toIcu()
-    }
+    private val df: DecimalFormat =
+        (NumberFormat.getInstance(uloc) as DecimalFormat).apply {
+            isGroupingUsed = style.grouping
+            minimumFractionDigits = style.minFractionDigits
+            maximumFractionDigits = style.maxFractionDigits
+            roundingMode = style.rounding.toIcu()
+        }
     private val minusSign: String = df.decimalFormatSymbols.minusSign.toString()
 
     override fun format(value: DecimalInput): String {
@@ -145,12 +146,12 @@ private class PercentJvmFormatter(
     uloc: ULocale,
     private val style: NumberStyle.Percent,
 ) : PlatformFormatter {
-
-    private val df: DecimalFormat = (NumberFormat.getInstance(uloc, NumberFormat.PERCENTSTYLE) as DecimalFormat).apply {
-        minimumFractionDigits = style.minFractionDigits
-        maximumFractionDigits = style.maxFractionDigits
-        roundingMode = style.rounding.toIcu()
-    }
+    private val df: DecimalFormat =
+        (NumberFormat.getInstance(uloc, NumberFormat.PERCENTSTYLE) as DecimalFormat).apply {
+            minimumFractionDigits = style.minFractionDigits
+            maximumFractionDigits = style.maxFractionDigits
+            roundingMode = style.rounding.toIcu()
+        }
 
     override fun format(value: DecimalInput): String {
         val ratio = ratioOf(value, style.scale)
@@ -162,43 +163,45 @@ private class ScientificJvmFormatter(
     uloc: ULocale,
     style: NumberStyle.Scientific,
 ) : PlatformFormatter {
-
-    private val df: DecimalFormat = (NumberFormat.getInstance(uloc, NumberFormat.SCIENTIFICSTYLE) as DecimalFormat).apply {
-        maximumFractionDigits = style.maxFractionDigits
-        if (style.engineering) {
-            minimumIntegerDigits = 1
-            maximumIntegerDigits = 3
+    private val df: DecimalFormat =
+        (NumberFormat.getInstance(uloc, NumberFormat.SCIENTIFICSTYLE) as DecimalFormat).apply {
+            maximumFractionDigits = style.maxFractionDigits
+            if (style.engineering) {
+                minimumIntegerDigits = 1
+                maximumIntegerDigits = 3
+            }
         }
-    }
 
-    override fun format(value: DecimalInput): String = when (value) {
-        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else df.format(value.value)
-        is DecimalInput.OfLong -> df.format(value.value)
-        is DecimalInput.OfString -> df.format(BigDecimal(value.value) as Any)
-    }
+    override fun format(value: DecimalInput): String =
+        when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else df.format(value.value)
+            is DecimalInput.OfLong -> df.format(value.value)
+            is DecimalInput.OfString -> df.format(BigDecimal(value.value) as Any)
+        }
 }
 
 private class CompactJvmFormatter(
     uloc: ULocale,
     style: NumberStyle.Compact,
 ) : PlatformFormatter {
+    private val cdf: CompactDecimalFormat =
+        CompactDecimalFormat.getInstance(
+            uloc,
+            if (style.length == NumberStyle.Compact.Length.LONG) {
+                CompactDecimalFormat.CompactStyle.LONG
+            } else {
+                CompactDecimalFormat.CompactStyle.SHORT
+            },
+        ).apply {
+            maximumFractionDigits = style.maxFractionDigits
+        }
 
-    private val cdf: CompactDecimalFormat = CompactDecimalFormat.getInstance(
-        uloc,
-        if (style.length == NumberStyle.Compact.Length.LONG) {
-            CompactDecimalFormat.CompactStyle.LONG
-        } else {
-            CompactDecimalFormat.CompactStyle.SHORT
-        },
-    ).apply {
-        maximumFractionDigits = style.maxFractionDigits
-    }
-
-    override fun format(value: DecimalInput): String = when (value) {
-        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else cdf.format(value.value)
-        is DecimalInput.OfLong -> cdf.format(value.value)
-        is DecimalInput.OfString -> cdf.format(value.value.toDouble())
-    }
+    override fun format(value: DecimalInput): String =
+        when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else cdf.format(value.value)
+            is DecimalInput.OfLong -> cdf.format(value.value)
+            is DecimalInput.OfString -> cdf.format(value.value.toDouble())
+        }
 }
 
 private class OrdinalJvmFormatter(uloc: ULocale) : PlatformFormatter {
@@ -214,83 +217,88 @@ private class MeasureJvmFormatter(
     uloc: ULocale,
     style: NumberStyle.Measure,
 ) : PlatformFormatter {
-
     private val unit = toIcuMeasureUnit(style.unit)
-    private val mf: MeasureFormat = run {
-        val numbers = (NumberFormat.getInstance(uloc) as DecimalFormat).apply {
-            maximumFractionDigits = style.maxFractionDigits
+    private val mf: MeasureFormat =
+        run {
+            val numbers =
+                (NumberFormat.getInstance(uloc) as DecimalFormat).apply {
+                    maximumFractionDigits = style.maxFractionDigits
+                }
+            val width =
+                when (style.width) {
+                    NumberStyle.Measure.Width.NARROW -> MeasureFormat.FormatWidth.NARROW
+                    NumberStyle.Measure.Width.SHORT -> MeasureFormat.FormatWidth.SHORT
+                    NumberStyle.Measure.Width.LONG -> MeasureFormat.FormatWidth.WIDE
+                }
+            MeasureFormat.getInstance(uloc, width, numbers)
         }
-        val width = when (style.width) {
-            NumberStyle.Measure.Width.NARROW -> MeasureFormat.FormatWidth.NARROW
-            NumberStyle.Measure.Width.SHORT -> MeasureFormat.FormatWidth.SHORT
-            NumberStyle.Measure.Width.LONG -> MeasureFormat.FormatWidth.WIDE
-        }
-        MeasureFormat.getInstance(uloc, width, numbers)
-    }
 
     override fun format(value: DecimalInput): String {
-        val v = when (value) {
-            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
-            is DecimalInput.OfLong -> value.value.toDouble()
-            is DecimalInput.OfString -> value.value.toDouble()
-        }
+        val v =
+            when (value) {
+                is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+                is DecimalInput.OfLong -> value.value.toDouble()
+                is DecimalInput.OfString -> value.value.toDouble()
+            }
         return mf.format(Measure(v, unit))
     }
 }
 
-private fun toIcuMeasureUnit(unit: MeasureUnit): IcuMeasureUnit = when (unit) {
-    MeasureUnit.METER -> IcuMeasureUnit.METER
-    MeasureUnit.KILOMETER -> IcuMeasureUnit.KILOMETER
-    MeasureUnit.CENTIMETER -> IcuMeasureUnit.CENTIMETER
-    MeasureUnit.MILE -> IcuMeasureUnit.MILE
-    MeasureUnit.FOOT -> IcuMeasureUnit.FOOT
-    MeasureUnit.GRAM -> IcuMeasureUnit.GRAM
-    MeasureUnit.KILOGRAM -> IcuMeasureUnit.KILOGRAM
-    MeasureUnit.POUND -> IcuMeasureUnit.POUND
-    MeasureUnit.OUNCE -> IcuMeasureUnit.OUNCE
-    MeasureUnit.LITER -> IcuMeasureUnit.LITER
-    MeasureUnit.MILLILITER -> IcuMeasureUnit.MILLILITER
-    MeasureUnit.CELSIUS -> IcuMeasureUnit.CELSIUS
-    MeasureUnit.FAHRENHEIT -> IcuMeasureUnit.FAHRENHEIT
-    MeasureUnit.BYTE -> IcuMeasureUnit.BYTE
-    MeasureUnit.KILOBYTE -> IcuMeasureUnit.KILOBYTE
-    MeasureUnit.MEGABYTE -> IcuMeasureUnit.MEGABYTE
-    MeasureUnit.GIGABYTE -> IcuMeasureUnit.GIGABYTE
-    MeasureUnit.SECOND -> IcuMeasureUnit.SECOND
-    MeasureUnit.MINUTE -> IcuMeasureUnit.MINUTE
-    MeasureUnit.HOUR -> IcuMeasureUnit.HOUR
-    MeasureUnit.DAY -> IcuMeasureUnit.DAY
-}
+private fun toIcuMeasureUnit(unit: MeasureUnit): IcuMeasureUnit =
+    when (unit) {
+        MeasureUnit.METER -> IcuMeasureUnit.METER
+        MeasureUnit.KILOMETER -> IcuMeasureUnit.KILOMETER
+        MeasureUnit.CENTIMETER -> IcuMeasureUnit.CENTIMETER
+        MeasureUnit.MILE -> IcuMeasureUnit.MILE
+        MeasureUnit.FOOT -> IcuMeasureUnit.FOOT
+        MeasureUnit.GRAM -> IcuMeasureUnit.GRAM
+        MeasureUnit.KILOGRAM -> IcuMeasureUnit.KILOGRAM
+        MeasureUnit.POUND -> IcuMeasureUnit.POUND
+        MeasureUnit.OUNCE -> IcuMeasureUnit.OUNCE
+        MeasureUnit.LITER -> IcuMeasureUnit.LITER
+        MeasureUnit.MILLILITER -> IcuMeasureUnit.MILLILITER
+        MeasureUnit.CELSIUS -> IcuMeasureUnit.CELSIUS
+        MeasureUnit.FAHRENHEIT -> IcuMeasureUnit.FAHRENHEIT
+        MeasureUnit.BYTE -> IcuMeasureUnit.BYTE
+        MeasureUnit.KILOBYTE -> IcuMeasureUnit.KILOBYTE
+        MeasureUnit.MEGABYTE -> IcuMeasureUnit.MEGABYTE
+        MeasureUnit.GIGABYTE -> IcuMeasureUnit.GIGABYTE
+        MeasureUnit.SECOND -> IcuMeasureUnit.SECOND
+        MeasureUnit.MINUTE -> IcuMeasureUnit.MINUTE
+        MeasureUnit.HOUR -> IcuMeasureUnit.HOUR
+        MeasureUnit.DAY -> IcuMeasureUnit.DAY
+    }
 
 private class RelativeTimeJvmFormatter(
     uloc: ULocale,
     style: NumberStyle.RelativeTime,
 ) : PlatformFormatter {
-
     private val fmt = RelativeDateTimeFormatter.getInstance(uloc)
     private val unit = toRelativeUnit(style.unit)
 
     override fun format(value: DecimalInput): String {
-        val q = when (value) {
-            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
-            is DecimalInput.OfLong -> value.value.toDouble()
-            is DecimalInput.OfString -> value.value.toDouble()
-        }
+        val q =
+            when (value) {
+                is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+                is DecimalInput.OfLong -> value.value.toDouble()
+                is DecimalInput.OfString -> value.value.toDouble()
+            }
         val direction = if (q >= 0) RelativeDateTimeFormatter.Direction.NEXT else RelativeDateTimeFormatter.Direction.LAST
         return fmt.format(abs(q), direction, unit)
     }
 }
 
-private fun toRelativeUnit(unit: TimeUnit): RelativeDateTimeFormatter.RelativeUnit = when (unit) {
-    TimeUnit.SECOND -> RelativeDateTimeFormatter.RelativeUnit.SECONDS
-    TimeUnit.MINUTE -> RelativeDateTimeFormatter.RelativeUnit.MINUTES
-    TimeUnit.HOUR -> RelativeDateTimeFormatter.RelativeUnit.HOURS
-    TimeUnit.DAY -> RelativeDateTimeFormatter.RelativeUnit.DAYS
-    TimeUnit.WEEK -> RelativeDateTimeFormatter.RelativeUnit.WEEKS
-    TimeUnit.MONTH -> RelativeDateTimeFormatter.RelativeUnit.MONTHS
-    TimeUnit.QUARTER -> RelativeDateTimeFormatter.RelativeUnit.QUARTERS
-    TimeUnit.YEAR -> RelativeDateTimeFormatter.RelativeUnit.YEARS
-}
+private fun toRelativeUnit(unit: TimeUnit): RelativeDateTimeFormatter.RelativeUnit =
+    when (unit) {
+        TimeUnit.SECOND -> RelativeDateTimeFormatter.RelativeUnit.SECONDS
+        TimeUnit.MINUTE -> RelativeDateTimeFormatter.RelativeUnit.MINUTES
+        TimeUnit.HOUR -> RelativeDateTimeFormatter.RelativeUnit.HOURS
+        TimeUnit.DAY -> RelativeDateTimeFormatter.RelativeUnit.DAYS
+        TimeUnit.WEEK -> RelativeDateTimeFormatter.RelativeUnit.WEEKS
+        TimeUnit.MONTH -> RelativeDateTimeFormatter.RelativeUnit.MONTHS
+        TimeUnit.QUARTER -> RelativeDateTimeFormatter.RelativeUnit.QUARTERS
+        TimeUnit.YEAR -> RelativeDateTimeFormatter.RelativeUnit.YEARS
+    }
 
 private class SpelloutJvmFormatter(uloc: ULocale) : PlatformFormatter {
     private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.SPELLOUT)
@@ -301,12 +309,13 @@ private class SpelloutJvmFormatter(uloc: ULocale) : PlatformFormatter {
     }
 }
 
-private fun RoundingMode.toIcu(): Int = when (this) {
-    RoundingMode.HALF_UP -> IcuRounding.ROUND_HALF_UP
-    RoundingMode.HALF_EVEN -> IcuRounding.ROUND_HALF_EVEN
-    RoundingMode.HALF_DOWN -> IcuRounding.ROUND_HALF_DOWN
-    RoundingMode.UP -> IcuRounding.ROUND_UP
-    RoundingMode.DOWN -> IcuRounding.ROUND_DOWN
-    RoundingMode.CEILING -> IcuRounding.ROUND_CEILING
-    RoundingMode.FLOOR -> IcuRounding.ROUND_FLOOR
-}
+private fun RoundingMode.toIcu(): Int =
+    when (this) {
+        RoundingMode.HALF_UP -> IcuRounding.ROUND_HALF_UP
+        RoundingMode.HALF_EVEN -> IcuRounding.ROUND_HALF_EVEN
+        RoundingMode.HALF_DOWN -> IcuRounding.ROUND_HALF_DOWN
+        RoundingMode.UP -> IcuRounding.ROUND_UP
+        RoundingMode.DOWN -> IcuRounding.ROUND_DOWN
+        RoundingMode.CEILING -> IcuRounding.ROUND_CEILING
+        RoundingMode.FLOOR -> IcuRounding.ROUND_FLOOR
+    }

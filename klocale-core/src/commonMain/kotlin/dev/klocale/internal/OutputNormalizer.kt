@@ -3,7 +3,6 @@ package dev.klocale.internal
 import dev.klocale.NormalizationPolicy
 
 internal object OutputNormalizer {
-
     private const val UNICODE_MINUS = '\u2212'
     private const val NBSP = '\u00A0'
     private const val NARROW_NBSP = '\u202F'
@@ -11,7 +10,10 @@ internal object OutputNormalizer {
     private const val RLM = '\u200F'
     private const val ALM = '\u061C'
 
-    fun apply(raw: String, policy: NormalizationPolicy): String {
+    fun apply(
+        raw: String,
+        policy: NormalizationPolicy,
+    ): String {
         val space = policy.groupingSpace.char
         val sb = StringBuilder(raw.length)
         for (ch in raw) {

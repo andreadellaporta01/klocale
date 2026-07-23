@@ -19,8 +19,8 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - name: JVM / JS / WasmJs tests + API check
-        run: ./gradlew jvmTest jsNodeTest wasmJsNodeTest apiCheck --stacktrace
+      - name: Lint / JVM / JS / WasmJs tests + API check
+        run: ./gradlew ktlintCheck jvmTest jsNodeTest wasmJsNodeTest apiCheck --stacktrace
       - name: Android tests (Robolectric)
         run: ./gradlew :klocale-core:testDebugUnitTest --tests "dev.klocale.AndroidGoldenTest" --stacktrace
 

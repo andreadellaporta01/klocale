@@ -11,13 +11,12 @@ import kotlin.test.assertEquals
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class AndroidGoldenTest {
-
     @Test
     fun allGoldenCasesMatchOnAndroid() {
         val failures = mutableListOf<String>()
         for (case in GOLDEN_CASES) {
             val locale = NumberLocale.fromLanguageTag(case.locale).getOrThrow()
-            val result = NumberFormatter(case.style, locale)
+            val result = NumberFormatter.of(case.style, locale)
             if (Platform.ANDROID in case.unsupportedOn) {
                 if (result.isSuccess) failures += "[${case.id}] expected UnsupportedStyle but succeeded"
                 continue
