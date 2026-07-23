@@ -14,6 +14,7 @@ internal actual fun currentLocaleTag(): String {
 }
 
 internal actual fun platformLocaleInfo(languageTag: String): LocaleInfo? {
+    if (languageTag.isBlank()) return null
     val canonical = resolvedLocale(languageTag)
     if (canonical.isEmpty()) return null
     val seps = localeSeparators(languageTag).split('|')
@@ -172,8 +173,7 @@ private class OrdinalWebFormatter(private val localeTag: String) : PlatformForma
     }
 }
 
-private fun ordinalCategory(locale: String, n: Double): String =
-    js("new Intl.PluralRules(locale, { type: 'ordinal' }).select(n)")
+internal expect fun ordinalCategory(locale: String, n: Double): String
 
 private class RelativeTimeWebFormatter(
     private val localeTag: String,
@@ -194,8 +194,7 @@ private class RelativeTimeWebFormatter(
     }
 }
 
-private fun intlRelative(locale: String, numeric: String, style: String, unit: String, value: Double): String =
-    js("new Intl.RelativeTimeFormat(locale, { numeric: numeric, style: style }).format(value, unit)")
+internal expect fun intlRelative(locale: String, numeric: String, style: String, unit: String, value: Double): String
 
 private class MeasureWebFormatter(
     private val localeTag: String,
@@ -278,14 +277,10 @@ private fun nonFinite(value: Double): String = when {
     else -> "-∞"
 }
 
-private fun intlFormat(locale: String, optionsJson: String, value: Double): String =
-    js("new Intl.NumberFormat(locale, JSON.parse(optionsJson)).format(value)")
+internal expect fun intlFormat(locale: String, optionsJson: String, value: Double): String
 
-private fun intlFormatString(locale: String, optionsJson: String, value: String): String =
-    js("new Intl.NumberFormat(locale, JSON.parse(optionsJson)).format(value)")
+internal expect fun intlFormatString(locale: String, optionsJson: String, value: String): String
 
-private fun resolvedLocale(locale: String): String =
-    js("(function(){try{return new Intl.NumberFormat(locale===''?undefined:locale).resolvedOptions().locale;}catch(e){return '';}})()")
+internal expect fun resolvedLocale(locale: String): String
 
-private fun localeSeparators(locale: String): String =
-    js("(function(){var p=new Intl.NumberFormat(locale).formatToParts(11111.1);var g='',d='';for(var i=0;i<p.length;i++){if(p[i].type==='group')g=p[i].value;if(p[i].type==='decimal')d=p[i].value;}return g+'|'+d;})()")
+internal expect fun localeSeparators(locale: String): String
