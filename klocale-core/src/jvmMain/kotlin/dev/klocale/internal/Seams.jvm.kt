@@ -1,6 +1,7 @@
 package dev.klocale.internal
 
 import com.ibm.icu.math.BigDecimal as IcuRounding
+import com.ibm.icu.text.CompactDecimalFormat
 import com.ibm.icu.text.DecimalFormat
 import com.ibm.icu.text.DecimalFormatSymbols
 import com.ibm.icu.text.NumberFormat
@@ -35,6 +36,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Currency -> CurrencyJvmFormatter(uloc, style)
         is NumberStyle.Percent -> PercentJvmFormatter(uloc, style)
         is NumberStyle.Scientific -> ScientificJvmFormatter(uloc, style)
+        is NumberStyle.Compact -> CompactJvmFormatter(uloc, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -161,6 +163,29 @@ private class ScientificJvmFormatter(
         is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else df.format(value.value)
         is DecimalInput.OfLong -> df.format(value.value)
         is DecimalInput.OfString -> df.format(BigDecimal(value.value) as Any)
+    }
+}
+
+private class CompactJvmFormatter(
+    uloc: ULocale,
+    style: NumberStyle.Compact,
+) : PlatformFormatter {
+
+    private val cdf: CompactDecimalFormat = CompactDecimalFormat.getInstance(
+        uloc,
+        if (style.length == NumberStyle.Compact.Length.LONG) {
+            CompactDecimalFormat.CompactStyle.LONG
+        } else {
+            CompactDecimalFormat.CompactStyle.SHORT
+        },
+    ).apply {
+        maximumFractionDigits = style.maxFractionDigits
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else cdf.format(value.value)
+        is DecimalInput.OfLong -> cdf.format(value.value)
+        is DecimalInput.OfString -> cdf.format(value.value.toDouble())
     }
 }
 

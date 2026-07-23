@@ -50,4 +50,10 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("pct_value", "en-US", NumberStyle.Percent(scale = NumberStyle.Percent.Scale.VALUE), "42", "42%"),
     GoldenCase("sci_en_us", "en-US", NumberStyle.Scientific(), "12345", "1.2345E4"),
     GoldenCase("sci_small", "en-US", NumberStyle.Scientific(), "0.00012345", "1.2345E-4"),
+    GoldenCase("cmp_en_k", "en-US", NumberStyle.Compact(), "1200", "1.2K"),
+    GoldenCase("cmp_en_k2", "en-US", NumberStyle.Compact(), "12000", "12K"),
+    GoldenCase("cmp_en_m", "en-US", NumberStyle.Compact(), "1200000", "1.2M"),
+    GoldenCase("cmp_en_b", "en-US", NumberStyle.Compact(), "1200000000", "1.2B"),
+    GoldenCase("cmp_en_t", "en-US", NumberStyle.Compact(), "1200000000000", "1.2T"),
+    GoldenCase("cmp_en_small", "en-US", NumberStyle.Compact(), "999", "999"),
 )

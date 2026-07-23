@@ -1,6 +1,7 @@
 package dev.klocale.internal
 
 import android.icu.math.BigDecimal as IcuRounding
+import android.icu.text.CompactDecimalFormat
 import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
 import android.icu.text.NumberFormat
@@ -35,6 +36,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Currency -> CurrencyAndroidFormatter(uloc, style)
         is NumberStyle.Percent -> PercentAndroidFormatter(uloc, style)
         is NumberStyle.Scientific -> ScientificAndroidFormatter(uloc, style)
+        is NumberStyle.Compact -> CompactAndroidFormatter(uloc, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -161,6 +163,29 @@ private class ScientificAndroidFormatter(
         is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else df.format(value.value)
         is DecimalInput.OfLong -> df.format(value.value)
         is DecimalInput.OfString -> df.format(BigDecimal(value.value) as Any)
+    }
+}
+
+private class CompactAndroidFormatter(
+    uloc: ULocale,
+    style: NumberStyle.Compact,
+) : PlatformFormatter {
+
+    private val cdf: CompactDecimalFormat = CompactDecimalFormat.getInstance(
+        uloc,
+        if (style.length == NumberStyle.Compact.Length.LONG) {
+            CompactDecimalFormat.CompactStyle.LONG
+        } else {
+            CompactDecimalFormat.CompactStyle.SHORT
+        },
+    ).apply {
+        maximumFractionDigits = style.maxFractionDigits
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else cdf.format(value.value)
+        is DecimalInput.OfLong -> cdf.format(value.value)
+        is DecimalInput.OfString -> cdf.format(value.value.toDouble())
     }
 }
 

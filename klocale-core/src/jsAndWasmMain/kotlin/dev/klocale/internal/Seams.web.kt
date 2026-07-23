@@ -27,6 +27,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Currency -> CurrencyWebFormatter(spec.localeTag, style)
         is NumberStyle.Percent -> PercentWebFormatter(spec.localeTag, style)
         is NumberStyle.Scientific -> ScientificWebFormatter(spec.localeTag, style)
+        is NumberStyle.Compact -> CompactWebFormatter(spec.localeTag, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -112,6 +113,26 @@ private class ScientificWebFormatter(
 
     private val options: String = buildString {
         append("{\"notation\":\"").append(if (style.engineering) "engineering" else "scientific").append('"')
+        append(",\"maximumFractionDigits\":").append(style.maxFractionDigits)
+        append('}')
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else intlFormat(localeTag, options, value.value)
+        is DecimalInput.OfLong -> intlFormat(localeTag, options, value.value.toDouble())
+        is DecimalInput.OfString -> intlFormatString(localeTag, options, value.value)
+    }
+}
+
+private class CompactWebFormatter(
+    private val localeTag: String,
+    style: NumberStyle.Compact,
+) : PlatformFormatter {
+
+    private val display = if (style.length == NumberStyle.Compact.Length.LONG) "long" else "short"
+    private val options: String = buildString {
+        append("{\"notation\":\"compact\"")
+        append(",\"compactDisplay\":\"").append(display).append('"')
         append(",\"maximumFractionDigits\":").append(style.maxFractionDigits)
         append('}')
     }

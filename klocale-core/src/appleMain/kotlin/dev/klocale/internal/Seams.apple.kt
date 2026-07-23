@@ -6,6 +6,7 @@ import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
 import dev.klocale.SignDisplay
+import kotlin.math.abs
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import platform.Foundation.NSDecimalNumber
@@ -55,6 +56,14 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Currency -> CurrencyAppleFormatter(spec.localeTag, style)
         is NumberStyle.Percent -> PercentAppleFormatter(spec.localeTag, style)
         is NumberStyle.Scientific -> ScientificAppleFormatter(spec.localeTag, style)
+        is NumberStyle.Compact -> {
+            val language = spec.localeTag.substringBefore('-').lowercase()
+            if (language == "en" && style.length == NumberStyle.Compact.Length.SHORT) {
+                CompactAppleFormatter(style)
+            } else {
+                throw NumberFormatError.UnsupportedStyle(style, backendName)
+            }
+        }
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -189,6 +198,41 @@ private class ScientificAppleFormatter(
             is DecimalInput.OfString -> NSDecimalNumber(string = value.value)
         }
         return nf.stringFromNumber(number) ?: number.stringValue
+    }
+}
+
+private class CompactAppleFormatter(
+    style: NumberStyle.Compact,
+) : PlatformFormatter {
+
+    private val nf = NSNumberFormatter().apply {
+        locale = NSLocale(localeIdentifier = "en_US")
+        numberStyle = NSNumberFormatterDecimalStyle
+        usesGroupingSeparator = false
+        minimumFractionDigits = 0uL.convert()
+        maximumFractionDigits = style.maxFractionDigits.convert()
+        roundingMode = NSNumberFormatterRoundHalfEven
+    }
+
+    override fun format(value: DecimalInput): String {
+        val d = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+            is DecimalInput.OfLong -> value.value.toDouble()
+            is DecimalInput.OfString -> value.value.toDouble()
+        }
+        val magnitude = abs(d)
+        val scale: Double
+        val suffix: String
+        when {
+            magnitude >= 1e12 -> { scale = 1e12; suffix = "T" }
+            magnitude >= 1e9 -> { scale = 1e9; suffix = "B" }
+            magnitude >= 1e6 -> { scale = 1e6; suffix = "M" }
+            magnitude >= 1e3 -> { scale = 1e3; suffix = "K" }
+            else -> return nf.stringFromNumber(NSNumber(double = d)) ?: d.toString()
+        }
+        val scaled = d / scale
+        val head = nf.stringFromNumber(NSNumber(double = scaled)) ?: scaled.toString()
+        return head + suffix
     }
 }
 
