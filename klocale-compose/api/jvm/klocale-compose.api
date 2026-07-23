@@ -1,0 +1,7 @@
+public final class dev/klocale/compose/KlocaleKt {
+	public static final fun ProvideNumberLocale-iXnaMAU (Ljava/lang/String;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
+	public static final fun getLocalNumberLocale ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final synthetic fun rememberNumberFormatter-kQtOkNM (Ldev/klocale/NumberStyle;Ljava/lang/String;Ldev/klocale/NormalizationPolicy;Landroidx/compose/runtime/Composer;II)Ldev/klocale/NumberFormatter;
+	public static final fun rememberNumberFormatter-skcrfkM (Ldev/klocale/NumberStyle;Ljava/lang/String;Ldev/klocale/NormalizationPolicy;Landroidx/compose/runtime/Composer;II)Ldev/klocale/NumberFormatter;
+}
+

@@ -6,8 +6,8 @@ import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
 import android.icu.text.MeasureFormat
 import android.icu.text.NumberFormat
+import android.icu.text.PluralRules
 import android.icu.text.RelativeDateTimeFormatter
-import android.icu.text.RuleBasedNumberFormat
 import android.icu.util.Currency
 import android.icu.util.Measure
 import android.icu.util.MeasureUnit as IcuMeasureUnit
@@ -45,10 +45,16 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Percent -> PercentAndroidFormatter(uloc, style)
         is NumberStyle.Scientific -> ScientificAndroidFormatter(uloc, style)
         is NumberStyle.Compact -> CompactAndroidFormatter(uloc, style)
-        is NumberStyle.Ordinal ->
-            if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAndroidFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
-        is NumberStyle.Spellout -> SpelloutAndroidFormatter(uloc)
-        is NumberStyle.RelativeTime -> RelativeTimeAndroidFormatter(uloc, style)
+        is NumberStyle.Ordinal -> {
+            val language = spec.localeTag.substringBefore('-').lowercase()
+            if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX && language == "en") {
+                OrdinalAndroidFormatter(uloc)
+            } else {
+                throw NumberFormatError.UnsupportedStyle(style, backendName)
+            }
+        }
+        is NumberStyle.RelativeTime ->
+            if (style.unit == TimeUnit.QUARTER) throw NumberFormatError.UnsupportedStyle(style, backendName) else RelativeTimeAndroidFormatter(uloc, style)
         is NumberStyle.Measure -> MeasureAndroidFormatter(uloc, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
@@ -203,11 +209,17 @@ private class CompactAndroidFormatter(
 }
 
 private class OrdinalAndroidFormatter(uloc: ULocale) : PlatformFormatter {
-    private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.ORDINAL)
+    private val rules = PluralRules.forLocale(uloc, PluralRules.PluralType.ORDINAL)
 
     override fun format(value: DecimalInput): String {
         val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
-        return rbnf.format(n)
+        val suffix = when (rules.select(n.toDouble())) {
+            "one" -> "st"
+            "two" -> "nd"
+            "few" -> "rd"
+            else -> "th"
+        }
+        return "$n$suffix"
     }
 }
 
@@ -289,17 +301,8 @@ private fun toRelativeUnit(unit: TimeUnit): RelativeDateTimeFormatter.RelativeUn
     TimeUnit.DAY -> RelativeDateTimeFormatter.RelativeUnit.DAYS
     TimeUnit.WEEK -> RelativeDateTimeFormatter.RelativeUnit.WEEKS
     TimeUnit.MONTH -> RelativeDateTimeFormatter.RelativeUnit.MONTHS
-    TimeUnit.QUARTER -> RelativeDateTimeFormatter.RelativeUnit.QUARTERS
+    TimeUnit.QUARTER -> error("quarter is guarded before construction")
     TimeUnit.YEAR -> RelativeDateTimeFormatter.RelativeUnit.YEARS
-}
-
-private class SpelloutAndroidFormatter(uloc: ULocale) : PlatformFormatter {
-    private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.SPELLOUT)
-
-    override fun format(value: DecimalInput): String {
-        val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
-        return rbnf.format(n)
-    }
 }
 
 private fun toLongValue(value: DecimalInput): Long? = when (value) {
