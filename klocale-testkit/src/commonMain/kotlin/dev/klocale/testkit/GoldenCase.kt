@@ -22,6 +22,7 @@ data class GoldenCase(
     val input: String,
     val expected: String,
     val overrides: Map<Platform, String> = emptyMap(),
+    val unsupportedOn: Set<Platform> = emptySet(),
 ) {
     fun expectedFor(platform: Platform): String = overrides[platform] ?: expected
 }
@@ -64,4 +65,7 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("ord_en_21", "en-US", NumberStyle.Ordinal(), "21", "21st"),
     GoldenCase("ord_en_22", "en-US", NumberStyle.Ordinal(), "22", "22nd"),
     GoldenCase("ord_en_23", "en-US", NumberStyle.Ordinal(), "23", "23rd"),
+    GoldenCase("spell_en_123", "en-US", NumberStyle.Spellout(), "123", "one hundred twenty-three", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
+    GoldenCase("spell_en_million", "en-US", NumberStyle.Spellout(), "1000000", "one million", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
+    GoldenCase("spell_en_neg", "en-US", NumberStyle.Spellout(), "-5", "minus five", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
 )

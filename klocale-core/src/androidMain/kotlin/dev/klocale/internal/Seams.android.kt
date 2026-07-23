@@ -40,6 +40,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Compact -> CompactAndroidFormatter(uloc, style)
         is NumberStyle.Ordinal ->
             if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAndroidFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
+        is NumberStyle.Spellout -> SpelloutAndroidFormatter(uloc)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -194,6 +195,15 @@ private class CompactAndroidFormatter(
 
 private class OrdinalAndroidFormatter(uloc: ULocale) : PlatformFormatter {
     private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.ORDINAL)
+
+    override fun format(value: DecimalInput): String {
+        val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
+        return rbnf.format(n)
+    }
+}
+
+private class SpelloutAndroidFormatter(uloc: ULocale) : PlatformFormatter {
+    private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.SPELLOUT)
 
     override fun format(value: DecimalInput): String {
         val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)

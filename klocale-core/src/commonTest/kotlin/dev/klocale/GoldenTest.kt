@@ -12,8 +12,14 @@ class GoldenTest {
         val failures = mutableListOf<String>()
         for (case in GOLDEN_CASES) {
             val locale = NumberLocale.fromLanguageTag(case.locale).getOrThrow()
-            val formatter = NumberFormatter.orThrow(case.style, locale)
-            val actual = formatter.format(case.input)
+            val result = NumberFormatter(case.style, locale)
+            if (currentPlatform in case.unsupportedOn) {
+                if (result.isSuccess) {
+                    failures += "[${case.id}@$currentPlatform] expected UnsupportedStyle but construction succeeded"
+                }
+                continue
+            }
+            val actual = result.getOrThrow().format(case.input)
             val expected = case.expectedFor(currentPlatform)
             if (actual != expected) {
                 failures += "[${case.id}@$currentPlatform] expected <$expected> but was <$actual>"

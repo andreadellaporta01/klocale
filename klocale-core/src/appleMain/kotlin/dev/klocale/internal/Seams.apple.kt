@@ -20,6 +20,7 @@ import platform.Foundation.NSNumberFormatterDecimalStyle
 import platform.Foundation.NSNumberFormatterOrdinalStyle
 import platform.Foundation.NSNumberFormatterPercentStyle
 import platform.Foundation.NSNumberFormatterScientificStyle
+import platform.Foundation.NSNumberFormatterSpellOutStyle
 import platform.Foundation.NSNumberFormatterRoundCeiling
 import platform.Foundation.NSNumberFormatterRoundDown
 import platform.Foundation.NSNumberFormatterRoundFloor
@@ -67,7 +68,24 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         }
         is NumberStyle.Ordinal ->
             if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAppleFormatter(spec.localeTag) else throw NumberFormatError.UnsupportedStyle(style, backendName)
+        is NumberStyle.Spellout -> SpelloutAppleFormatter(spec.localeTag)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
+    }
+}
+
+private class SpelloutAppleFormatter(localeTag: String) : PlatformFormatter {
+    private val nf = NSNumberFormatter().apply {
+        locale = NSLocale(localeIdentifier = localeTag.replace('-', '_'))
+        numberStyle = NSNumberFormatterSpellOutStyle
+    }
+
+    override fun format(value: DecimalInput): String {
+        val n: Long = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value.toLong()
+            is DecimalInput.OfLong -> value.value
+            is DecimalInput.OfString -> value.value.toDouble().toLong()
+        }
+        return nf.stringFromNumber(NSNumber(long = n)) ?: n.toString()
     }
 }
 
