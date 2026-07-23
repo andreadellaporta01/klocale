@@ -29,7 +29,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.klocaleCore)
-            implementation(compose.runtime)
+            // api (not implementation): LocalNumberLocale exposes a compose.runtime type publicly.
+            api(compose.runtime)
         }
     }
 }

@@ -7,6 +7,8 @@ import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
 import dev.klocale.SignDisplay
 import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.round
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.convert
 import platform.Foundation.NSDecimalNumber
@@ -114,7 +116,7 @@ private class RelativeTimeAppleFormatter(
             TimeUnit.MINUTE -> comps.minute = n
             TimeUnit.HOUR -> comps.hour = n
             TimeUnit.DAY -> comps.day = n
-            TimeUnit.WEEK -> comps.weekOfMonth = n
+            TimeUnit.WEEK -> comps.weekOfYear = n
             TimeUnit.MONTH -> comps.month = n
             TimeUnit.YEAR -> comps.year = n
             TimeUnit.QUARTER -> return n.toString()
@@ -292,12 +294,13 @@ private class CompactAppleFormatter(
     style: NumberStyle.Compact,
 ) : PlatformFormatter {
 
+    private val maxFraction = style.maxFractionDigits
     private val nf = NSNumberFormatter().apply {
         locale = NSLocale(localeIdentifier = "en_US")
         numberStyle = NSNumberFormatterDecimalStyle
         usesGroupingSeparator = false
         minimumFractionDigits = 0uL.convert()
-        maximumFractionDigits = style.maxFractionDigits.convert()
+        maximumFractionDigits = maxFraction.convert()
         roundingMode = NSNumberFormatterRoundHalfEven
     }
 
@@ -308,18 +311,31 @@ private class CompactAppleFormatter(
             is DecimalInput.OfString -> value.value.toDouble()
         }
         val magnitude = abs(d)
-        val scale: Double
-        val suffix: String
-        when {
-            magnitude >= 1e12 -> { scale = 1e12; suffix = "T" }
-            magnitude >= 1e9 -> { scale = 1e9; suffix = "B" }
-            magnitude >= 1e6 -> { scale = 1e6; suffix = "M" }
-            magnitude >= 1e3 -> { scale = 1e3; suffix = "K" }
-            else -> return nf.stringFromNumber(NSNumber(double = d)) ?: d.toString()
+        if (magnitude < 1e3) return nf.stringFromNumber(NSNumber(double = d)) ?: d.toString()
+
+        var scale = when {
+            magnitude >= 1e12 -> 1e12
+            magnitude >= 1e9 -> 1e9
+            magnitude >= 1e6 -> 1e6
+            else -> 1e3
         }
-        val scaled = d / scale
-        val head = nf.stringFromNumber(NSNumber(double = scaled)) ?: scaled.toString()
-        return head + suffix
+        if (scale < 1e12 && roundToDigits(magnitude / scale, maxFraction) >= 1000.0) {
+            scale *= 1e3
+        }
+        val head = nf.stringFromNumber(NSNumber(double = d / scale)) ?: (d / scale).toString()
+        return head + suffixFor(scale)
+    }
+
+    private fun roundToDigits(x: Double, digits: Int): Double {
+        val factor = 10.0.pow(digits)
+        return round(x * factor) / factor
+    }
+
+    private fun suffixFor(scale: Double): String = when (scale) {
+        1e12 -> "T"
+        1e9 -> "B"
+        1e6 -> "M"
+        else -> "K"
     }
 }
 

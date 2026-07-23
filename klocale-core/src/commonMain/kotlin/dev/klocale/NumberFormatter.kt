@@ -20,7 +20,13 @@ public interface NumberFormatter {
     public fun format(value: Double): String
     public fun format(value: Long): String
 
-    /** Formats an arbitrary-precision decimal literal such as `"123456789012345.99"`. */
+    /**
+     * Formats a decimal literal (e.g. `"123456789012345.99"`).
+     *
+     * Full precision is preserved for [NumberStyle.Decimal] and [NumberStyle.Currency] on the
+     * JVM and Android backends; other styles and the Apple/JS/WasmJs backends format via [Double]
+     * (best effort). Throws [IllegalArgumentException] if [value] is not a valid decimal literal.
+     */
     public fun format(value: String): String
 
     public companion object {

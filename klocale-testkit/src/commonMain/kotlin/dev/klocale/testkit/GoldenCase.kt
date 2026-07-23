@@ -73,4 +73,11 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("rel_en_in3d", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "3", "in 3 days"),
     GoldenCase("rel_en_2dago", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "-2", "2 days ago"),
     GoldenCase("meas_en_km", "en-US", NumberStyle.Measure(MeasureUnit.KILOMETER), "12.5", "12.5 km", unsupportedOn = setOf(Platform.MACOS)),
+    GoldenCase("cur_en_usd_neg", "en-US", NumberStyle.Currency("USD"), "-1234.5", "-\$1,234.50"),
+    GoldenCase("pct_en_neg", "en-US", NumberStyle.Percent(), "-0.42", "-42%"),
+    GoldenCase("cmp_en_rollover_m", "en-US", NumberStyle.Compact(), "999999", "1M"),
+    GoldenCase("cmp_en_rollover_b", "en-US", NumberStyle.Compact(), "999999999", "1B"),
+    GoldenCase("dec_en_halfeven_down", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0), "2.5", "2"),
+    GoldenCase("dec_en_halfeven_up", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0), "3.5", "4"),
+    GoldenCase("dec_en_large", "en-US", NumberStyle.Decimal(minFractionDigits = 0, maxFractionDigits = 0), "1234567890", "1,234,567,890"),
 )

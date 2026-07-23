@@ -18,6 +18,12 @@ internal class NumberFormatterImpl(
     override fun format(value: Long): String =
         OutputNormalizer.apply(platform.format(DecimalInput.OfLong(value)), policy)
 
-    override fun format(value: String): String =
-        OutputNormalizer.apply(platform.format(DecimalInput.OfString(value)), policy)
+    override fun format(value: String): String {
+        require(DECIMAL_LITERAL.matches(value)) { "Not a valid decimal literal: '$value'" }
+        return OutputNormalizer.apply(platform.format(DecimalInput.OfString(value)), policy)
+    }
+
+    private companion object {
+        private val DECIMAL_LITERAL = Regex("[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?")
+    }
 }
