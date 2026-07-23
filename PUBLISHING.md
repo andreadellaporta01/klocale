@@ -61,6 +61,20 @@ gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>
 gpg --export-secret-keys --armor <KEY_ID>
 ```
 
+**If `--send-keys` fails with `keyserver send failed: Invalid argument`** (a common
+GnuPG/dirmngr issue on macOS, even with `hkps://`), skip gpg and upload the public key
+over plain HTTP instead — it's what gpg does under the hood:
+
+```bash
+gpg --export --armor <KEY_ID> > pubkey.asc
+curl -X POST https://keyserver.ubuntu.com/pks/add --data-urlencode "keytext@pubkey.asc"
+# verify it's retrievable (should print a PGP PUBLIC KEY BLOCK):
+curl "https://keyserver.ubuntu.com/pks/lookup?op=get&options=mr&search=0x<KEY_ID>"
+```
+
+Or paste the contents of `pubkey.asc` into the "Submit Key" box at
+https://keyserver.ubuntu.com.
+
 Credentials produced here:
 - `signingInMemoryKey` = the full armored private-key block from step 4
 - `signingInMemoryKeyPassword` = the passphrase you set in step 1
