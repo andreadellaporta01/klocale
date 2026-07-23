@@ -6,11 +6,15 @@ import dev.klocale.internal.createPlatformFormatter
 import dev.klocale.internal.platformLocaleInfo
 
 /**
- * A reusable, immutable formatter bound to a [locale], [style] and [policy].
+ * A reusable formatter bound to a [locale], [style] and [policy].
  *
  * Construction validates the configuration and can fail (see [invoke]); once built,
  * formatting a finite number **never** throws. Non-finite values are rendered as
  * documented tokens rather than raising.
+ *
+ * **Thread safety:** an instance may be reused freely, but is **not** safe for concurrent
+ * formatting from multiple threads (it wraps a non-thread-safe platform formatter). Confine
+ * a formatter to a single thread, or build one per thread.
  */
 public interface NumberFormatter {
     public val locale: NumberLocale
