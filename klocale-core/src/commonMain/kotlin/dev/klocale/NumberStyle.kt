@@ -73,11 +73,6 @@ public sealed interface NumberStyle {
         public enum class Width { NARROW, SHORT, LONG }
     }
 
-    /** A numeric range, e.g. `1–5`. */
-    public data class Range(
-        val inner: NumberStyle = Decimal(),
-    ) : NumberStyle
-
     /** Relative time, e.g. `in 3 days` / `2 hours ago`. */
     public data class RelativeTime(
         val unit: TimeUnit,

@@ -4,11 +4,15 @@ import android.icu.math.BigDecimal as IcuRounding
 import android.icu.text.CompactDecimalFormat
 import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
+import android.icu.text.MeasureFormat
 import android.icu.text.NumberFormat
 import android.icu.text.RelativeDateTimeFormatter
 import android.icu.text.RuleBasedNumberFormat
 import android.icu.util.Currency
+import android.icu.util.Measure
+import android.icu.util.MeasureUnit as IcuMeasureUnit
 import android.icu.util.ULocale
+import dev.klocale.MeasureUnit
 import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
@@ -45,6 +49,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
             if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAndroidFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         is NumberStyle.Spellout -> SpelloutAndroidFormatter(uloc)
         is NumberStyle.RelativeTime -> RelativeTimeAndroidFormatter(uloc, style)
+        is NumberStyle.Measure -> MeasureAndroidFormatter(uloc, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -204,6 +209,58 @@ private class OrdinalAndroidFormatter(uloc: ULocale) : PlatformFormatter {
         val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
         return rbnf.format(n)
     }
+}
+
+private class MeasureAndroidFormatter(
+    uloc: ULocale,
+    style: NumberStyle.Measure,
+) : PlatformFormatter {
+
+    private val unit = toIcuMeasureUnit(style.unit)
+    private val mf: MeasureFormat = run {
+        val numbers = (NumberFormat.getInstance(uloc) as DecimalFormat).apply {
+            maximumFractionDigits = style.maxFractionDigits
+        }
+        val width = when (style.width) {
+            NumberStyle.Measure.Width.NARROW -> MeasureFormat.FormatWidth.NARROW
+            NumberStyle.Measure.Width.SHORT -> MeasureFormat.FormatWidth.SHORT
+            NumberStyle.Measure.Width.LONG -> MeasureFormat.FormatWidth.WIDE
+        }
+        MeasureFormat.getInstance(uloc, width, numbers)
+    }
+
+    override fun format(value: DecimalInput): String {
+        val v = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+            is DecimalInput.OfLong -> value.value.toDouble()
+            is DecimalInput.OfString -> value.value.toDouble()
+        }
+        return mf.format(Measure(v, unit))
+    }
+}
+
+private fun toIcuMeasureUnit(unit: MeasureUnit): IcuMeasureUnit = when (unit) {
+    MeasureUnit.METER -> IcuMeasureUnit.METER
+    MeasureUnit.KILOMETER -> IcuMeasureUnit.KILOMETER
+    MeasureUnit.CENTIMETER -> IcuMeasureUnit.CENTIMETER
+    MeasureUnit.MILE -> IcuMeasureUnit.MILE
+    MeasureUnit.FOOT -> IcuMeasureUnit.FOOT
+    MeasureUnit.GRAM -> IcuMeasureUnit.GRAM
+    MeasureUnit.KILOGRAM -> IcuMeasureUnit.KILOGRAM
+    MeasureUnit.POUND -> IcuMeasureUnit.POUND
+    MeasureUnit.OUNCE -> IcuMeasureUnit.OUNCE
+    MeasureUnit.LITER -> IcuMeasureUnit.LITER
+    MeasureUnit.MILLILITER -> IcuMeasureUnit.MILLILITER
+    MeasureUnit.CELSIUS -> IcuMeasureUnit.CELSIUS
+    MeasureUnit.FAHRENHEIT -> IcuMeasureUnit.FAHRENHEIT
+    MeasureUnit.BYTE -> IcuMeasureUnit.BYTE
+    MeasureUnit.KILOBYTE -> IcuMeasureUnit.KILOBYTE
+    MeasureUnit.MEGABYTE -> IcuMeasureUnit.MEGABYTE
+    MeasureUnit.GIGABYTE -> IcuMeasureUnit.GIGABYTE
+    MeasureUnit.SECOND -> IcuMeasureUnit.SECOND
+    MeasureUnit.MINUTE -> IcuMeasureUnit.MINUTE
+    MeasureUnit.HOUR -> IcuMeasureUnit.HOUR
+    MeasureUnit.DAY -> IcuMeasureUnit.DAY
 }
 
 private class RelativeTimeAndroidFormatter(

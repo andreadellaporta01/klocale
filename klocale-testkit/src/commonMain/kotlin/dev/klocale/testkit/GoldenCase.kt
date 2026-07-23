@@ -1,5 +1,6 @@
 package dev.klocale.testkit
 
+import dev.klocale.MeasureUnit
 import dev.klocale.NumberStyle
 import dev.klocale.TimeUnit
 
@@ -71,4 +72,5 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("spell_en_neg", "en-US", NumberStyle.Spellout(), "-5", "minus five", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
     GoldenCase("rel_en_in3d", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "3", "in 3 days"),
     GoldenCase("rel_en_2dago", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "-2", "2 days ago"),
+    GoldenCase("meas_en_km", "en-US", NumberStyle.Measure(MeasureUnit.KILOMETER), "12.5", "12.5 km", unsupportedOn = setOf(Platform.MACOS)),
 )

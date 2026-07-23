@@ -1,5 +1,6 @@
 package dev.klocale.internal
 
+import dev.klocale.MeasureUnit
 import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
@@ -37,6 +38,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
             }
         }
         is NumberStyle.RelativeTime -> RelativeTimeWebFormatter(spec.localeTag, style)
+        is NumberStyle.Measure -> MeasureWebFormatter(spec.localeTag, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -194,6 +196,55 @@ private class RelativeTimeWebFormatter(
 
 private fun intlRelative(locale: String, numeric: String, style: String, unit: String, value: Double): String =
     js("new Intl.RelativeTimeFormat(locale, { numeric: numeric, style: style }).format(value, unit)")
+
+private class MeasureWebFormatter(
+    private val localeTag: String,
+    style: NumberStyle.Measure,
+) : PlatformFormatter {
+
+    private val display = when (style.width) {
+        NumberStyle.Measure.Width.NARROW -> "narrow"
+        NumberStyle.Measure.Width.SHORT -> "short"
+        NumberStyle.Measure.Width.LONG -> "long"
+    }
+    private val options: String = buildString {
+        append("{\"style\":\"unit\"")
+        append(",\"unit\":\"").append(intlUnit(style.unit)).append('"')
+        append(",\"unitDisplay\":\"").append(display).append('"')
+        append(",\"maximumFractionDigits\":").append(style.maxFractionDigits)
+        append('}')
+    }
+
+    override fun format(value: DecimalInput): String = when (value) {
+        is DecimalInput.OfDouble -> if (!value.value.isFinite()) nonFinite(value.value) else intlFormat(localeTag, options, value.value)
+        is DecimalInput.OfLong -> intlFormat(localeTag, options, value.value.toDouble())
+        is DecimalInput.OfString -> intlFormatString(localeTag, options, value.value)
+    }
+}
+
+private fun intlUnit(unit: MeasureUnit): String = when (unit) {
+    MeasureUnit.METER -> "meter"
+    MeasureUnit.KILOMETER -> "kilometer"
+    MeasureUnit.CENTIMETER -> "centimeter"
+    MeasureUnit.MILE -> "mile"
+    MeasureUnit.FOOT -> "foot"
+    MeasureUnit.GRAM -> "gram"
+    MeasureUnit.KILOGRAM -> "kilogram"
+    MeasureUnit.POUND -> "pound"
+    MeasureUnit.OUNCE -> "ounce"
+    MeasureUnit.LITER -> "liter"
+    MeasureUnit.MILLILITER -> "milliliter"
+    MeasureUnit.CELSIUS -> "celsius"
+    MeasureUnit.FAHRENHEIT -> "fahrenheit"
+    MeasureUnit.BYTE -> "byte"
+    MeasureUnit.KILOBYTE -> "kilobyte"
+    MeasureUnit.MEGABYTE -> "megabyte"
+    MeasureUnit.GIGABYTE -> "gigabyte"
+    MeasureUnit.SECOND -> "second"
+    MeasureUnit.MINUTE -> "minute"
+    MeasureUnit.HOUR -> "hour"
+    MeasureUnit.DAY -> "day"
+}
 
 private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
     val base = when (value) {
