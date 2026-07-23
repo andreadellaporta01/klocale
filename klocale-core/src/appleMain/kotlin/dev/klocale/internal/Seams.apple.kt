@@ -17,6 +17,7 @@ import platform.Foundation.NSNumberFormatterCurrencyAccountingStyle
 import platform.Foundation.NSNumberFormatterCurrencyISOCodeStyle
 import platform.Foundation.NSNumberFormatterCurrencyStyle
 import platform.Foundation.NSNumberFormatterDecimalStyle
+import platform.Foundation.NSNumberFormatterOrdinalStyle
 import platform.Foundation.NSNumberFormatterPercentStyle
 import platform.Foundation.NSNumberFormatterScientificStyle
 import platform.Foundation.NSNumberFormatterRoundCeiling
@@ -64,7 +65,25 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
                 throw NumberFormatError.UnsupportedStyle(style, backendName)
             }
         }
+        is NumberStyle.Ordinal ->
+            if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAppleFormatter(spec.localeTag) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
+    }
+}
+
+private class OrdinalAppleFormatter(localeTag: String) : PlatformFormatter {
+    private val nf = NSNumberFormatter().apply {
+        locale = NSLocale(localeIdentifier = localeTag.replace('-', '_'))
+        numberStyle = NSNumberFormatterOrdinalStyle
+    }
+
+    override fun format(value: DecimalInput): String {
+        val n: Long = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value.toLong()
+            is DecimalInput.OfLong -> value.value
+            is DecimalInput.OfString -> value.value.toDouble().toLong()
+        }
+        return nf.stringFromNumber(NSNumber(long = n)) ?: n.toString()
     }
 }
 

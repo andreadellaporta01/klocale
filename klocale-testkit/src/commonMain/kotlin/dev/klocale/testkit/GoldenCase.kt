@@ -56,4 +56,12 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("cmp_en_b", "en-US", NumberStyle.Compact(), "1200000000", "1.2B"),
     GoldenCase("cmp_en_t", "en-US", NumberStyle.Compact(), "1200000000000", "1.2T"),
     GoldenCase("cmp_en_small", "en-US", NumberStyle.Compact(), "999", "999"),
+    GoldenCase("ord_en_1", "en-US", NumberStyle.Ordinal(), "1", "1st"),
+    GoldenCase("ord_en_2", "en-US", NumberStyle.Ordinal(), "2", "2nd"),
+    GoldenCase("ord_en_3", "en-US", NumberStyle.Ordinal(), "3", "3rd"),
+    GoldenCase("ord_en_4", "en-US", NumberStyle.Ordinal(), "4", "4th"),
+    GoldenCase("ord_en_11", "en-US", NumberStyle.Ordinal(), "11", "11th"),
+    GoldenCase("ord_en_21", "en-US", NumberStyle.Ordinal(), "21", "21st"),
+    GoldenCase("ord_en_22", "en-US", NumberStyle.Ordinal(), "22", "22nd"),
+    GoldenCase("ord_en_23", "en-US", NumberStyle.Ordinal(), "23", "23rd"),
 )

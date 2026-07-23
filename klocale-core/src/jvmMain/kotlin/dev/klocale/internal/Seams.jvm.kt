@@ -5,6 +5,7 @@ import com.ibm.icu.text.CompactDecimalFormat
 import com.ibm.icu.text.DecimalFormat
 import com.ibm.icu.text.DecimalFormatSymbols
 import com.ibm.icu.text.NumberFormat
+import com.ibm.icu.text.RuleBasedNumberFormat
 import com.ibm.icu.util.Currency
 import com.ibm.icu.util.ULocale
 import dev.klocale.NumberFormatError
@@ -37,6 +38,8 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Percent -> PercentJvmFormatter(uloc, style)
         is NumberStyle.Scientific -> ScientificJvmFormatter(uloc, style)
         is NumberStyle.Compact -> CompactJvmFormatter(uloc, style)
+        is NumberStyle.Ordinal ->
+            if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalJvmFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -187,6 +190,21 @@ private class CompactJvmFormatter(
         is DecimalInput.OfLong -> cdf.format(value.value)
         is DecimalInput.OfString -> cdf.format(value.value.toDouble())
     }
+}
+
+private class OrdinalJvmFormatter(uloc: ULocale) : PlatformFormatter {
+    private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.ORDINAL)
+
+    override fun format(value: DecimalInput): String {
+        val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
+        return rbnf.format(n)
+    }
+}
+
+private fun toLongValue(value: DecimalInput): Long? = when (value) {
+    is DecimalInput.OfDouble -> if (value.value.isFinite()) value.value.toLong() else null
+    is DecimalInput.OfLong -> value.value
+    is DecimalInput.OfString -> value.value.toDouble().toLong()
 }
 
 private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {

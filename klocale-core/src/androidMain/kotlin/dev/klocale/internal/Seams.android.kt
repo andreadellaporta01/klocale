@@ -5,6 +5,7 @@ import android.icu.text.CompactDecimalFormat
 import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
 import android.icu.text.NumberFormat
+import android.icu.text.RuleBasedNumberFormat
 import android.icu.util.Currency
 import android.icu.util.ULocale
 import dev.klocale.NumberFormatError
@@ -37,6 +38,8 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Percent -> PercentAndroidFormatter(uloc, style)
         is NumberStyle.Scientific -> ScientificAndroidFormatter(uloc, style)
         is NumberStyle.Compact -> CompactAndroidFormatter(uloc, style)
+        is NumberStyle.Ordinal ->
+            if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAndroidFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -187,6 +190,21 @@ private class CompactAndroidFormatter(
         is DecimalInput.OfLong -> cdf.format(value.value)
         is DecimalInput.OfString -> cdf.format(value.value.toDouble())
     }
+}
+
+private class OrdinalAndroidFormatter(uloc: ULocale) : PlatformFormatter {
+    private val rbnf = RuleBasedNumberFormat(uloc, RuleBasedNumberFormat.ORDINAL)
+
+    override fun format(value: DecimalInput): String {
+        val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
+        return rbnf.format(n)
+    }
+}
+
+private fun toLongValue(value: DecimalInput): Long? = when (value) {
+    is DecimalInput.OfDouble -> if (value.value.isFinite()) value.value.toLong() else null
+    is DecimalInput.OfLong -> value.value
+    is DecimalInput.OfString -> value.value.toDouble().toLong()
 }
 
 private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {

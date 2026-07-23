@@ -28,6 +28,14 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Percent -> PercentWebFormatter(spec.localeTag, style)
         is NumberStyle.Scientific -> ScientificWebFormatter(spec.localeTag, style)
         is NumberStyle.Compact -> CompactWebFormatter(spec.localeTag, style)
+        is NumberStyle.Ordinal -> {
+            val language = spec.localeTag.substringBefore('-').lowercase()
+            if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX && language == "en") {
+                OrdinalWebFormatter(spec.localeTag)
+            } else {
+                throw NumberFormatError.UnsupportedStyle(style, backendName)
+            }
+        }
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -143,6 +151,26 @@ private class CompactWebFormatter(
         is DecimalInput.OfString -> intlFormatString(localeTag, options, value.value)
     }
 }
+
+private class OrdinalWebFormatter(private val localeTag: String) : PlatformFormatter {
+    override fun format(value: DecimalInput): String {
+        val n: Long = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value.toLong()
+            is DecimalInput.OfLong -> value.value
+            is DecimalInput.OfString -> value.value.toDouble().toLong()
+        }
+        val suffix = when (ordinalCategory(localeTag, n.toDouble())) {
+            "one" -> "st"
+            "two" -> "nd"
+            "few" -> "rd"
+            else -> "th"
+        }
+        return "$n$suffix"
+    }
+}
+
+private fun ordinalCategory(locale: String, n: Double): String =
+    js("new Intl.PluralRules(locale, { type: 'ordinal' }).select(n)")
 
 private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
     val base = when (value) {
