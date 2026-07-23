@@ -31,6 +31,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(":klocale-core")
 include(":klocale-testkit")
+include(":klocale-compose")
 // TODO: re-enable once implemented
-// include(":klocale-compose")
 // include(":sample")
