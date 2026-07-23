@@ -4,7 +4,7 @@ Step-by-step to release Klocale to Maven Central and verify it before announcing
 Do these in order. Do NOT promote the library until step 7 passes.
 
 ## 0. Confirm coordinates
-- The Maven group is `io.github.andreadellaporta` (see `gradle.properties` → `GROUP`).
+- The Maven group is `io.github.andreadellaporta01` (see `gradle.properties` → `GROUP`).
   If your GitHub handle differs, fix `GROUP`, `POM_URL`, `POM_SCM_*`, `POM_DEVELOPER_*`
   first — everything below depends on it.
 
@@ -17,7 +17,7 @@ gh repo create klocale --public --source=. --remote=origin --push
 
 ## 2. Verify the namespace on Central Portal
 - Sign in at https://central.sonatype.com with GitHub.
-- Add namespace `io.github.andreadellaporta`. For `io.github.*` namespaces,
+- Add namespace `io.github.andreadellaporta01`. For `io.github.*` namespaces,
   verification is done by proving you own the GitHub account (create the public
   repo / temporary verification repo the portal asks for). Wait for "Verified".
 
@@ -51,8 +51,8 @@ export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=...
 ## 7. VERIFY before announcing (do not skip)
 After ~15–30 min indexing, in a *fresh* throwaway project with only `mavenCentral()`:
 ```kotlin
-implementation("io.github.andreadellaporta:klocale-core:0.1.0")
-implementation("io.github.andreadellaporta:klocale-compose:0.1.0")
+implementation("io.github.andreadellaporta01:klocale-core:0.1.0")
+implementation("io.github.andreadellaporta01:klocale-compose:0.1.0")
 ```
 Confirm it resolves and a `formatCurrency(...)` call works. Only now announce.
 

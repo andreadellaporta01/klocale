@@ -17,9 +17,9 @@ Android · iOS · macOS · JVM/Desktop · JS · WasmJs
 ```kotlin
 // settings.gradle.kts -> mavenCentral()
 dependencies {
-    implementation("io.github.andreadellaporta:klocale-core:0.1.0")
+    implementation("io.github.andreadellaporta01:klocale-core:0.1.0")
     // optional, for Compose Multiplatform:
-    implementation("io.github.andreadellaporta:klocale-compose:0.1.0")
+    implementation("io.github.andreadellaporta01:klocale-compose:0.1.0")
 }
 ```
 
