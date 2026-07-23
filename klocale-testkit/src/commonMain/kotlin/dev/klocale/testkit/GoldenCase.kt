@@ -1,6 +1,7 @@
 package dev.klocale.testkit
 
 import dev.klocale.NumberStyle
+import dev.klocale.TimeUnit
 
 /** The runtime backend a test is executing on. */
 enum class Platform { ANDROID, JVM, IOS, MACOS, JS, WASM_JS }
@@ -68,4 +69,6 @@ val GOLDEN_CASES: List<GoldenCase> = listOf(
     GoldenCase("spell_en_123", "en-US", NumberStyle.Spellout(), "123", "one hundred twenty-three", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
     GoldenCase("spell_en_million", "en-US", NumberStyle.Spellout(), "1000000", "one million", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
     GoldenCase("spell_en_neg", "en-US", NumberStyle.Spellout(), "-5", "minus five", unsupportedOn = setOf(Platform.JS, Platform.WASM_JS)),
+    GoldenCase("rel_en_in3d", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "3", "in 3 days"),
+    GoldenCase("rel_en_2dago", "en-US", NumberStyle.RelativeTime(TimeUnit.DAY, numeric = NumberStyle.RelativeTime.Numeric.ALWAYS), "-2", "2 days ago"),
 )

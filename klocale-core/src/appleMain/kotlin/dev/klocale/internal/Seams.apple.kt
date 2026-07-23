@@ -21,6 +21,14 @@ import platform.Foundation.NSNumberFormatterOrdinalStyle
 import platform.Foundation.NSNumberFormatterPercentStyle
 import platform.Foundation.NSNumberFormatterScientificStyle
 import platform.Foundation.NSNumberFormatterSpellOutStyle
+import platform.Foundation.NSDateComponents
+import platform.Foundation.NSRelativeDateTimeFormatter
+import platform.Foundation.NSRelativeDateTimeFormatterStyleNamed
+import platform.Foundation.NSRelativeDateTimeFormatterStyleNumeric
+import platform.Foundation.NSRelativeDateTimeFormatterUnitsStyleAbbreviated
+import platform.Foundation.NSRelativeDateTimeFormatterUnitsStyleFull
+import platform.Foundation.NSRelativeDateTimeFormatterUnitsStyleShort
+import dev.klocale.TimeUnit
 import platform.Foundation.NSNumberFormatterRoundCeiling
 import platform.Foundation.NSNumberFormatterRoundDown
 import platform.Foundation.NSNumberFormatterRoundFloor
@@ -69,7 +77,49 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Ordinal ->
             if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAppleFormatter(spec.localeTag) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         is NumberStyle.Spellout -> SpelloutAppleFormatter(spec.localeTag)
+        is NumberStyle.RelativeTime ->
+            if (style.unit == TimeUnit.QUARTER) throw NumberFormatError.UnsupportedStyle(style, backendName) else RelativeTimeAppleFormatter(spec.localeTag, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
+    }
+}
+
+private class RelativeTimeAppleFormatter(
+    localeTag: String,
+    private val style: NumberStyle.RelativeTime,
+) : PlatformFormatter {
+
+    private val fmt = NSRelativeDateTimeFormatter().apply {
+        locale = NSLocale(localeIdentifier = localeTag.replace('-', '_'))
+        dateTimeStyle = if (style.numeric == NumberStyle.RelativeTime.Numeric.ALWAYS) {
+            NSRelativeDateTimeFormatterStyleNumeric
+        } else {
+            NSRelativeDateTimeFormatterStyleNamed
+        }
+        unitsStyle = when (style.width) {
+            NumberStyle.RelativeTime.Width.LONG -> NSRelativeDateTimeFormatterUnitsStyleFull
+            NumberStyle.RelativeTime.Width.SHORT -> NSRelativeDateTimeFormatterUnitsStyleShort
+            NumberStyle.RelativeTime.Width.NARROW -> NSRelativeDateTimeFormatterUnitsStyleAbbreviated
+        }
+    }
+
+    override fun format(value: DecimalInput): String {
+        val n: Long = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value.toLong()
+            is DecimalInput.OfLong -> value.value
+            is DecimalInput.OfString -> value.value.toDouble().toLong()
+        }
+        val comps = NSDateComponents()
+        when (style.unit) {
+            TimeUnit.SECOND -> comps.second = n
+            TimeUnit.MINUTE -> comps.minute = n
+            TimeUnit.HOUR -> comps.hour = n
+            TimeUnit.DAY -> comps.day = n
+            TimeUnit.WEEK -> comps.weekOfMonth = n
+            TimeUnit.MONTH -> comps.month = n
+            TimeUnit.YEAR -> comps.year = n
+            TimeUnit.QUARTER -> return n.toString()
+        }
+        return fmt.localizedStringFromDateComponents(comps)
     }
 }
 

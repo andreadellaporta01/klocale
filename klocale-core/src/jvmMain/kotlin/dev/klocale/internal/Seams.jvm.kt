@@ -5,6 +5,7 @@ import com.ibm.icu.text.CompactDecimalFormat
 import com.ibm.icu.text.DecimalFormat
 import com.ibm.icu.text.DecimalFormatSymbols
 import com.ibm.icu.text.NumberFormat
+import com.ibm.icu.text.RelativeDateTimeFormatter
 import com.ibm.icu.text.RuleBasedNumberFormat
 import com.ibm.icu.util.Currency
 import com.ibm.icu.util.ULocale
@@ -12,6 +13,8 @@ import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
 import dev.klocale.SignDisplay
+import dev.klocale.TimeUnit
+import kotlin.math.abs
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -41,6 +44,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Ordinal ->
             if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalJvmFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         is NumberStyle.Spellout -> SpelloutJvmFormatter(uloc)
+        is NumberStyle.RelativeTime -> RelativeTimeJvmFormatter(uloc, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -200,6 +204,36 @@ private class OrdinalJvmFormatter(uloc: ULocale) : PlatformFormatter {
         val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
         return rbnf.format(n)
     }
+}
+
+private class RelativeTimeJvmFormatter(
+    uloc: ULocale,
+    style: NumberStyle.RelativeTime,
+) : PlatformFormatter {
+
+    private val fmt = RelativeDateTimeFormatter.getInstance(uloc)
+    private val unit = toRelativeUnit(style.unit)
+
+    override fun format(value: DecimalInput): String {
+        val q = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+            is DecimalInput.OfLong -> value.value.toDouble()
+            is DecimalInput.OfString -> value.value.toDouble()
+        }
+        val direction = if (q >= 0) RelativeDateTimeFormatter.Direction.NEXT else RelativeDateTimeFormatter.Direction.LAST
+        return fmt.format(abs(q), direction, unit)
+    }
+}
+
+private fun toRelativeUnit(unit: TimeUnit): RelativeDateTimeFormatter.RelativeUnit = when (unit) {
+    TimeUnit.SECOND -> RelativeDateTimeFormatter.RelativeUnit.SECONDS
+    TimeUnit.MINUTE -> RelativeDateTimeFormatter.RelativeUnit.MINUTES
+    TimeUnit.HOUR -> RelativeDateTimeFormatter.RelativeUnit.HOURS
+    TimeUnit.DAY -> RelativeDateTimeFormatter.RelativeUnit.DAYS
+    TimeUnit.WEEK -> RelativeDateTimeFormatter.RelativeUnit.WEEKS
+    TimeUnit.MONTH -> RelativeDateTimeFormatter.RelativeUnit.MONTHS
+    TimeUnit.QUARTER -> RelativeDateTimeFormatter.RelativeUnit.QUARTERS
+    TimeUnit.YEAR -> RelativeDateTimeFormatter.RelativeUnit.YEARS
 }
 
 private class SpelloutJvmFormatter(uloc: ULocale) : PlatformFormatter {

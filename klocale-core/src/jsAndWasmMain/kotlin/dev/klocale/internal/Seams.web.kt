@@ -36,6 +36,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
                 throw NumberFormatError.UnsupportedStyle(style, backendName)
             }
         }
+        is NumberStyle.RelativeTime -> RelativeTimeWebFormatter(spec.localeTag, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -171,6 +172,28 @@ private class OrdinalWebFormatter(private val localeTag: String) : PlatformForma
 
 private fun ordinalCategory(locale: String, n: Double): String =
     js("new Intl.PluralRules(locale, { type: 'ordinal' }).select(n)")
+
+private class RelativeTimeWebFormatter(
+    private val localeTag: String,
+    style: NumberStyle.RelativeTime,
+) : PlatformFormatter {
+
+    private val numeric = if (style.numeric == NumberStyle.RelativeTime.Numeric.ALWAYS) "always" else "auto"
+    private val width = style.width.name.lowercase()
+    private val unit = style.unit.name.lowercase()
+
+    override fun format(value: DecimalInput): String {
+        val v = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+            is DecimalInput.OfLong -> value.value.toDouble()
+            is DecimalInput.OfString -> value.value.toDouble()
+        }
+        return intlRelative(localeTag, numeric, width, unit, v)
+    }
+}
+
+private fun intlRelative(locale: String, numeric: String, style: String, unit: String, value: Double): String =
+    js("new Intl.RelativeTimeFormat(locale, { numeric: numeric, style: style }).format(value, unit)")
 
 private fun ratioOf(value: DecimalInput, scale: NumberStyle.Percent.Scale): Double {
     val base = when (value) {

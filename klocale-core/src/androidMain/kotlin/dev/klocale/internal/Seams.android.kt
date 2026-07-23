@@ -5,6 +5,7 @@ import android.icu.text.CompactDecimalFormat
 import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
 import android.icu.text.NumberFormat
+import android.icu.text.RelativeDateTimeFormatter
 import android.icu.text.RuleBasedNumberFormat
 import android.icu.util.Currency
 import android.icu.util.ULocale
@@ -12,6 +13,8 @@ import dev.klocale.NumberFormatError
 import dev.klocale.NumberStyle
 import dev.klocale.RoundingMode
 import dev.klocale.SignDisplay
+import dev.klocale.TimeUnit
+import kotlin.math.abs
 import java.math.BigDecimal
 import java.util.Locale
 
@@ -41,6 +44,7 @@ internal actual fun createPlatformFormatter(spec: FormatSpec): PlatformFormatter
         is NumberStyle.Ordinal ->
             if (style.kind == NumberStyle.Ordinal.Kind.SUFFIX) OrdinalAndroidFormatter(uloc) else throw NumberFormatError.UnsupportedStyle(style, backendName)
         is NumberStyle.Spellout -> SpelloutAndroidFormatter(uloc)
+        is NumberStyle.RelativeTime -> RelativeTimeAndroidFormatter(uloc, style)
         else -> throw NumberFormatError.UnsupportedStyle(style, backendName)
     }
 }
@@ -200,6 +204,36 @@ private class OrdinalAndroidFormatter(uloc: ULocale) : PlatformFormatter {
         val n = toLongValue(value) ?: return nonFinite((value as DecimalInput.OfDouble).value)
         return rbnf.format(n)
     }
+}
+
+private class RelativeTimeAndroidFormatter(
+    uloc: ULocale,
+    style: NumberStyle.RelativeTime,
+) : PlatformFormatter {
+
+    private val fmt = RelativeDateTimeFormatter.getInstance(uloc)
+    private val unit = toRelativeUnit(style.unit)
+
+    override fun format(value: DecimalInput): String {
+        val q = when (value) {
+            is DecimalInput.OfDouble -> if (!value.value.isFinite()) return nonFinite(value.value) else value.value
+            is DecimalInput.OfLong -> value.value.toDouble()
+            is DecimalInput.OfString -> value.value.toDouble()
+        }
+        val direction = if (q >= 0) RelativeDateTimeFormatter.Direction.NEXT else RelativeDateTimeFormatter.Direction.LAST
+        return fmt.format(abs(q), direction, unit)
+    }
+}
+
+private fun toRelativeUnit(unit: TimeUnit): RelativeDateTimeFormatter.RelativeUnit = when (unit) {
+    TimeUnit.SECOND -> RelativeDateTimeFormatter.RelativeUnit.SECONDS
+    TimeUnit.MINUTE -> RelativeDateTimeFormatter.RelativeUnit.MINUTES
+    TimeUnit.HOUR -> RelativeDateTimeFormatter.RelativeUnit.HOURS
+    TimeUnit.DAY -> RelativeDateTimeFormatter.RelativeUnit.DAYS
+    TimeUnit.WEEK -> RelativeDateTimeFormatter.RelativeUnit.WEEKS
+    TimeUnit.MONTH -> RelativeDateTimeFormatter.RelativeUnit.MONTHS
+    TimeUnit.QUARTER -> RelativeDateTimeFormatter.RelativeUnit.QUARTERS
+    TimeUnit.YEAR -> RelativeDateTimeFormatter.RelativeUnit.YEARS
 }
 
 private class SpelloutAndroidFormatter(uloc: ULocale) : PlatformFormatter {
