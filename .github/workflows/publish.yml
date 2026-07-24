@@ -1,8 +1,9 @@
 name: Publish
 
+# Manual trigger: bump VERSION_NAME first, then run this workflow from the Actions tab.
+# (Not tag-triggered, so creating a GitHub Release never re-publishes an existing version.)
 on:
-  push:
-    tags: [ 'v*' ]
+  workflow_dispatch:
 
 jobs:
   publish:

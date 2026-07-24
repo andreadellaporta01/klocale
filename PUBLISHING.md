@@ -83,9 +83,11 @@ Credentials produced here:
 - In `gradle.properties`, set `VERSION_NAME=0.1.0` (no `-SNAPSHOT`).
 
 ## 6. Publish
-Local (secrets via env), or push a `v*` tag to run `.github/workflows/publish.yml`
-(add the four secrets to the GitHub repo first: `MAVEN_CENTRAL_USERNAME`,
-`MAVEN_CENTRAL_PASSWORD`, `SIGNING_IN_MEMORY_KEY`, `SIGNING_IN_MEMORY_KEY_PASSWORD`).
+Local (secrets via env), or run the **Publish** workflow manually
+(GitHub → Actions → Publish → Run workflow) after adding the four secrets to the repo:
+`MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_IN_MEMORY_KEY`,
+`SIGNING_IN_MEMORY_KEY_PASSWORD`. Bump `VERSION_NAME` before running (Central versions
+are immutable — you can't re-publish the same version).
 
 ```bash
 export ORG_GRADLE_PROJECT_mavenCentralUsername=...
